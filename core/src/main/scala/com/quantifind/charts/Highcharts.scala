@@ -128,7 +128,10 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
       .map(s => "\t" + s)
       .foreach(println)
     println("\nOther plotting options:\n")
-    Map("histogram" -> "Iterable of Numerics or Pairs")
+    Map(
+      "histogram" -> "Iterable of Numerics or Pairs",
+      "boxplot" -> "Collections of five Numerics : low, q1, median, q3, high"
+    )
       .map{case(plot, description) =>"\t%-35s%s".format(plot, description)}
       .foreach(println)
     println("\nStylistic changes:\n")
