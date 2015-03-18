@@ -77,6 +77,7 @@ Available Plot Types: Takes an Iterable, an Iterable of pairs, a pair of Iterabl
 Other plotting options:
 
 	histogram                          Iterable of Numerics or Pairs
+    boxplot                            Collections of five Numerics : low, q1, median, q3, high
 
 Stylistic changes:
 
