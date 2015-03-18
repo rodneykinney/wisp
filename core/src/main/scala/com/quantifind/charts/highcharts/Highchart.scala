@@ -141,7 +141,7 @@ case class Highchart(
   def toJson = Serialization.write(jsonMap)
 
   def jsonMap: Map[String, Any] = {
-    if(series.size == 0) System.err.println("Tried to create a chart with no series")
+    if(series.size == 0) System.err.println("Warning: created a plot with no data - visualization will be empty")
 
     // Because we want to default to turboThreshold off (0) we control it as a boolean at the top-most level
     // As otherwise it is a per-type plotOption

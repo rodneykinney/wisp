@@ -27,6 +27,10 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
   implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new CoupledTripletBinned(data)
 
   // for boxplot
+  def invalidSizeBoxPlot() = {
+    System.err.println("Warning: tried to create a boxplot from a list that wasn't size 5 - removing invalid elements")
+  }
+
   implicit def mkBoxedDataBoxes[T: Numeric](data: Iterable[(T, T, T, T, T)]): Iterable[BoxplotData[T]] = {
     data.map{case(low, q1, median, q3, high) => Data(low, q1, median, q3, high)}
   }
@@ -34,15 +38,19 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
     data.map{case(x, low, q1, median, q3, high) => Data(x, low, q1, median, q3, high)}
   }
   implicit def mkBoxedDataIterable[T: Numeric](data: Iterable[Iterable[T]]): Iterable[BoxplotData[T]] = {
+    if(data.exists(_.size != 5)) invalidSizeBoxPlot()
     data.filter(_.size == 5).map(_.toList).map{itr => Data(itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
   implicit def mkBoxedDataArray[T: Numeric](data: Iterable[Array[T]]): Iterable[BoxplotData[T]] = {
+    if(data.exists(_.size != 5)) invalidSizeBoxPlot()
     data.filter(_.size == 5).map{itr => Data(itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
   implicit def mkBoxedDataXIterable[T: Numeric](data: Iterable[(Any, Iterable[T])]): Iterable[BoxplotData[T]] = {
+    if(data.exists(_._2.size != 5)) invalidSizeBoxPlot()
     data.filter(_._2.size == 5).map{case(x, itr) => x -> itr.toList}.map{case(x, itr) => Data(x, itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
   implicit def mkBoxedDataXArray[T: Numeric](data: Iterable[(Any, Array[T])]): Iterable[BoxplotData[T]] = {
+    if(data.exists(_._2.size != 5)) invalidSizeBoxPlot()
     data.filter(_._2.size == 5).map{case(x, itr) => Data(x, itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
 
