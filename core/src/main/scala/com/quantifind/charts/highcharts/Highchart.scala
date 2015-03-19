@@ -1,7 +1,6 @@
 package com.quantifind.charts.highcharts
 
 import org.json4s.NoTypeHints
-import org.json4s.JsonDSL.WithDouble._
 import org.json4s.jackson.Serialization
 import scala.collection._
 import scala.language.implicitConversions
