@@ -130,14 +130,31 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
       .foreach(println)
     println("\nStylistic changes:\n")
     ListMap(
-      "hold" -> "plots the next plot on top of the existing plot",
-      "unhold" -> "plots the next plot in a new chart",
-      "title(String)" -> "add a title to the most recent plot",
-      "xAxis(String)" -> "adds a label to the x-axis",
-      "yAxis(String)" -> "adds a label to y-axis",
-      "legend(Iterable[String])" -> "adds a legend to the most recent plot",
-      """stack(["normal", "percent"])""" -> "stacks bars, columns, and lines relative to each other"
-    ).foreach{case(method, description) => println("\t%-35s%s".format(method, description))}
+      List("hold") -> "plots the next plot on top of the existing plot",
+      List("unhold") -> "plots the next plot in a new chart",
+      List("title(String)") -> "add a title to the most recent plot",
+      List("xAxis(String)") -> "adds a label to the x-axis",
+      List(
+        "xAxisType([",
+        """"linear", "logarithmic",""",
+        """"datetime", "category"""",
+        "])"
+      ) -> "updates the x-axis type",
+      List("yAxis(String)") -> "adds a label to y-axis",
+      List(
+        "yAxisType([",
+        """"linear", "logarithmic",""",
+        """"datetime", "category"""",
+        "])"
+      ) -> "updates the y-axis type",
+      List("legend(Iterable[String])") -> "adds a legend to the most recent plot",
+      List("""stack(["normal", "percent"])""") -> "stacks bars, columns, and lines relative to each other",
+      List("unstack") -> "remove stacking"
+    ).foreach { case (methodLines, description) =>
+      println("\t%-35s%s".format(methodLines(0), description))
+      methodLines.slice(1, methodLines.length - 1).foreach(line => println("\t  %s".format(line)))
+      methodLines.slice(1, methodLines.length).reverse.headOption.foreach(line => println("\t%s".format(line)))
+    }
 
     println("\nServer Controls:\n")
     ListMap(

@@ -20,7 +20,8 @@ class HighchartsReplTest extends FunSuite with Matchers  {
         """"plotOptions":{},""" +
         """"credits":{"href":"","text":""},""" +
         """"chart":{"zoomType":"xy"},""" +
-        """"title":{"text":""}}"""
+        """"title":{"text":""},""" +
+        """"xAxis":[{"title":{"text":""}}]}"""
     )
   }
 

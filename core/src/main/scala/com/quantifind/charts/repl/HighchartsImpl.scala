@@ -136,13 +136,41 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
   def xAxis(label: String): Highchart = {
     val plot = plots.head
     plots = plots.tail
-    val newPlot = plot.copy(xAxis = label)
+    val newPlot = plot.copy(xAxis = plot.xAxis.map {
+      axisArray => axisArray.map { _.copy(title = label) }
+    })
+    super.plot(newPlot)
+  }
+  def xAxisType(axisType: AxisType.Type): Highchart = {
+    val plot = plots.head
+    if (!AxisType.values.contains(axisType)) {
+      println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
+      return plot
+    }
+    plots = plots.tail
+    val newPlot = plot.copy(xAxis = plot.xAxis.map {
+      axisArray => axisArray.map { _.copy(axisType = axisType) }
+    })
     super.plot(newPlot)
   }
   def yAxis(label: String): Highchart = {
     val plot = plots.head
     plots = plots.tail
-    val newPlot = plot.copy(yAxis = label)
+    val newPlot = plot.copy(yAxis = plot.yAxis.map {
+      axisArray => axisArray.map { _.copy(title = label) }
+    })
+    super.plot(newPlot)
+  }
+  def yAxisType(axisType: AxisType.Type): Highchart = {
+    val plot = plots.head
+    if (!AxisType.values.contains(axisType)) {
+      println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
+      return plot
+    }
+    plots = plots.tail
+    val newPlot = plot.copy(yAxis = plot.yAxis.map {
+      axisArray => axisArray.map { _.copy(axisType = axisType) }
+    })
     super.plot(newPlot)
   }
   // TODO better than seriesName?
@@ -177,6 +205,13 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     val plot = plots.head
     plots = plots.tail
     val newPlot = plot.copy(plotOptions = Some(PlotOptions(series = PlotOptionKey(stacking = stackType))))
+    super.plot(newPlot)
+  }
+
+  def unstack(): Highchart = {
+    val plot = plots.head
+    plots = plots.tail
+    val newPlot = plot.copy(plotOptions = Some(PlotOptions(series = PlotOptionKey(stacking = None))))
     super.plot(newPlot)
   }
 }

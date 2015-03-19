@@ -12,7 +12,7 @@ import Highchart._
 class HighchartTest extends FunSuite with Matchers {
 
   test("Single point Highchart to json") {
-    val hc = Highchart(Seq(Series(Seq(Data(1, 2)))), chart = Chart(zoomType = Zoom.xy), yAxis = None).toServiceFormat
+    val hc = Highchart(Seq(Series(Seq(Data(1, 2)))), chart = Chart(zoomType = Zoom.xy), xAxis = None, yAxis = None).toServiceFormat
 
 //    hc._2("x")should be (0)
 

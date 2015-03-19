@@ -131,7 +131,7 @@ case class Highchart(
                       subtitle: Option[Title] = None,
                       setTurboThreshold: Boolean = true,
                       tooltip: Option[ToolTip] = None,
-                      xAxis: Option[Array[Axis]] = None,
+                      xAxis: Option[Array[Axis]] = Some(Array(Axis())),
                       yAxis: Option[Array[Axis]] = Some(Array(Axis()))
                       ) {
 

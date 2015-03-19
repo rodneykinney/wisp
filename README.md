@@ -2,6 +2,8 @@
 It focuses on existing web-based plotting libraries, and strives to bring the power and flexibility of web-based plotting
 tools to the scala console, while preserving an at-your-finger-tips feel readily found in matlab, R, and many other languages.
 
+![Wisp Logo](https://raw.github.com/quantifind/wisp/master/images/wisp_logo_markOnly_color.png)
+
 [Watch the introductory video](https://www.youtube.com/watch?v=LZH9rCEP-6w)
 
 <!---[![Build Status](https://travis-ci.org/quantifind/Wisp.svg?branch=master)](https://travis-ci.org/quantifind/Wisp)--->
@@ -84,7 +86,15 @@ Stylistic changes:
 	unhold                             plots the next plot in a new chart
 	title(String)                      add a title to the most recent plot
 	xAxis(String)                      adds a label to the x-axis
+	xAxisType([                        updates the x-axis type
+	  "linear", "logarithmic",
+	  "datetime", "category"
+	])
 	yAxis(String)                      adds a label to y-axis
+	yAxisType([                        updates the y-axis type
+	  "linear", "logarithmic",
+	  "datetime", "category"
+	])
 	legend(Iterable[String])           adds a legend to the most recent plot
 	stack(["normal", "percent"])       stacks bars, columns, and lines relative to each other
 
@@ -152,4 +162,4 @@ Because this open source project is released by [Quantifind](http://www.quantifi
 
 This library includes links to [Highcharts](http://www.highcharts.com/). It does not include a copy of the source code, and does not modify the source code.
 
-[Highcharts](http://www.highcharts.com/) is available freely for non-commercial use under [Creative Common NonCommercial 3.0](http://creativecommons.org/licenses/by-nc/3.0/). It is **not** free for [non-commercial use](http://shop.highsoft.com/faq/non-commercial#what-is-non-commercial). 
+[Highcharts](http://www.highcharts.com/) is available freely for non-commercial use under [Creative Common NonCommercial 3.0](http://creativecommons.org/licenses/by-nc/3.0/). It is **not** free for [commercial use](http://shop.highsoft.com/faq/non-commercial#what-is-non-commercial). 
