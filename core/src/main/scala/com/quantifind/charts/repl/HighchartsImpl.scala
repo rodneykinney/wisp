@@ -1,12 +1,12 @@
 package com.quantifind.charts.repl
 
-import java.io.{PrintWriter, File}
+import java.io.{ PrintWriter, File }
 
-import com.quantifind.charts.highcharts.{Series, SeriesType, Highchart}
+import com.quantifind.charts.highcharts.{ Series, SeriesType, Highchart }
 import com.quantifind.charts.highcharts._
 import scala.concurrent.Promise
 import scala.util.Random
-
+import org.apache.commons.io.FileUtils
 /**
  * User: austin
  * Date: 12/3/14
@@ -40,7 +40,7 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
     pw.flush()
     pw.close()
 
-    plotServer.foreach{ps =>
+    plotServer.foreach { ps =>
       ps.p.success(())
       ps.p = Promise[Unit]()
     }
@@ -49,10 +49,10 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
 
     def link =
       if (serverMode) {
-        temp.renameTo(serverRootFile)
+        if (!serverRootFile.exists())
+          FileUtils.moveFile(temp, serverRootFile)
         s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}"
-      }
-      else s"file://$temp"
+      } else s"file://$temp"
 
     openFirstWindow(link)
 
@@ -89,22 +89,22 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
       |    </title>
       |    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     """.stripMargin +
-    wispJsImports
+      wispJsImports
 
   def highchartsContainer(hc: Highchart): String = {
     val hash = hc.hashCode()
-    val containerId = Random.nextInt(1e10.toInt) + (if(hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
+    val containerId = Random.nextInt(1e10.toInt) + (if (hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
     highchartsContainer(hc.toJson, containerId)
   }
 
   def highchartsContainer(json: String, index: Int): String =
     containerDivs(index) + "\n" +
-    """
+      """
       |    <script type="text/javascript">
       |        $(function() {
       |            $('#container%s').highcharts(
     """.stripMargin.format(index.toString) +
-    """
+      """
       |                %s
       |            );
       |        });
@@ -125,7 +125,7 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
   import Highchart._
   override def plot(t: Highchart): Highchart = {
     val newPlot =
-      if(isHeld && plots.nonEmpty) {
+      if (isHeld && plots.nonEmpty) {
         val oldplot = plots.head
         plots = plots.tail
         // Throws away things from t besides the series!
@@ -177,14 +177,14 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     val plot = plots.head
     plots = plots.tail
     val newPlot = plot.copy(title = label)
-    super.plot(newPlot)  
+    super.plot(newPlot)
   }
   // Assign names to series, if mis-matched lengths use the shorter one as a cut-off
   def legend(labels: Iterable[String]): Highchart = {
     val labelArray = labels.toArray
     val plot = plots.head
     plots = plots.tail
-    val newSeries = plot.series.toSeq.zipWithIndex.map{case(s, idx) => if(idx >= labels.size) s else s.copy(name = Some(labelArray(idx)))}
+    val newSeries = plot.series.toSeq.zipWithIndex.map { case (s, idx) => if (idx >= labels.size) s else s.copy(name = Some(labelArray(idx))) }
     val newPlot = plot.copy(series = newSeries)
     super.plot(newPlot)
   }

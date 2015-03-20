@@ -100,7 +100,8 @@ object WispBuild extends Build {
 			"net.databinder" %% "unfiltered-filter" % "0.8.3",
 			"net.databinder" %% "unfiltered-jetty" % "0.8.3",
 			"com.quantifind" %% "sumac" % "0.3.0",
-			"org.apache.commons" % "commons-math3" % "3.1"
+			"org.apache.commons" % "commons-math3" % "3.1",
+			"commons-io" % "commons-io" % "2.4"
 		)
 	)
 }
