@@ -17,37 +17,70 @@ import scala.language.implicitConversions
 
 object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowerPriorityImplicits with HighchartsStyles {
 
+  implicit def mkStringIterableIterable[B: Numeric](ab: (Iterable[String], Iterable[B])) = new StringIterableIterable(ab._1, ab._2)
+  implicit def mkStringIterableIterable[B: Numeric](ab: (Iterable[(String, B)])) = new StringIterableIterable(ab.map(_._1), ab.map(_._2))
+
+  implicit def mkStringArrayArray[B: Numeric](ab: (Array[String], Array[B])) = new StringIterableIterable(ab._1.toSeq, ab._2.toSeq)
+  implicit def mkStringArrayArray[B: Numeric](ab: (Array[(String, B)])) = new StringIterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
+
   implicit def mkIterableIterable[A: Numeric, B: Numeric](ab: (Iterable[A], Iterable[B])) = new IterableIterable(ab._1, ab._2)
   implicit def mkIterableIterable[A: Numeric, B: Numeric](ab: (Iterable[(A, B)])) = new IterableIterable(ab.map(_._1), ab.map(_._2))
   implicit def mkIterableIterable[B: Numeric](b: (Iterable[B])) = new IterableIterable((0 until b.size), b)
+
+  implicit def mkArrayArray[A: Numeric, B: Numeric](ab: (Array[A], Array[B])) = new IterableIterable(ab._1.toSeq, ab._2.toSeq)
+  implicit def mkArrayArray[A: Numeric, B: Numeric](ab: (Array[(A, B)])) = new IterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
+  implicit def mkArrayArray[B: Numeric](b: (Array[B])) = new IterableIterable((0 until b.size), b.toSeq)
+
+  implicit def mkArrayIterable[A: Numeric, B: Numeric](ab: (Array[A], Iterable[B])) = new IterableIterable(ab._1.toSeq, ab._2)
+  implicit def mkIterableArray[A: Numeric, B: Numeric](ab: (Iterable[A], Array[B])) = new IterableIterable(ab._1, ab._2.toSeq)
 
   implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new IterableBinned[A](data, numBins)
   implicit def mkPair[A, B: Numeric](data: Iterable[(A, B)]) = new PairBinned(data)
   implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) = new TrueTripletBinned(data)
   implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new CoupledTripletBinned(data)
 
+  implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData = new IterableBinned[A](data.toSeq, numBins)
+  implicit def mkPair[A, B: Numeric](data: Array[(A, B)]) = new PairBinned(data.toSeq)
+  implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) = new TrueTripletBinned(data.toSeq)
+  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) = new CoupledTripletBinned(data.toSeq)
+
   def stopServer = stopWispServer
   def startServer() = startWispServer()
   def setPort(port: Int) = setWispPort(port)
 
+  private def addStyle[A, B, C, D](xy: IterablePair[A, B, C, D]) = {
+    xy match {
+      case s: StringIterableIterable[_] => xAxisCategories(s.getCategories)
+      case _ =>
+    }
+  }
+
   def area[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.area)
+    val hc = xyToSeries(xr, yr, SeriesType.area)
+    addStyle(xy)
+    hc
   }
 
   def areaspline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.areaspline)
+    val hc = xyToSeries(xr, yr, SeriesType.areaspline)
+    addStyle(xy)
+    hc
   }
 
   def bar[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.bar)
+    val hc = xyToSeries(xr, yr, SeriesType.bar)
+    addStyle(xy)
+    hc
   }
 
   def column[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.column)
+    val hc = xyToSeries(xr, yr, SeriesType.column)
+    addStyle(xy)
+    hc
   }
 
   def histogram[A: Numeric](data: Iterable[A], numBins: Int) = {
@@ -62,12 +95,16 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
 
   def line[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.line)
+    val hc = xyToSeries(xr, yr, SeriesType.line)
+    addStyle(xy)
+    hc
   }
 
   def pie[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.pie)
+    val hc = xyToSeries(xr, yr, SeriesType.pie)
+    addStyle(xy)
+    hc
   }
 
   def regression[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
@@ -78,12 +115,16 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
 
   def scatter[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.scatter)
+    val hc = xyToSeries(xr, yr, SeriesType.scatter)
+    addStyle(xy)
+    hc
   }
 
   def spline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.spline)
+    val hc = xyToSeries(xr, yr, SeriesType.spline)
+    addStyle(xy)
+    hc
   }
 
   // Todo: can we disclose this information through reflection, instead of hardcoding it?

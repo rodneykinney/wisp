@@ -123,6 +123,7 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
  */
 trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPlotHighcharts {
   import Highchart._
+
   override def plot(t: Highchart): Highchart = {
     val newPlot =
       if (isHeld && plots.nonEmpty) {
@@ -133,6 +134,7 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
       } else t
     super.plot(newPlot)
   }
+
   def xAxis(label: String): Highchart = {
     val plot = plots.head
     plots = plots.tail
@@ -141,6 +143,7 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     })
     super.plot(newPlot)
   }
+
   def xAxisType(axisType: AxisType.Type): Highchart = {
     val plot = plots.head
     if (!AxisType.values.contains(axisType)) {
@@ -153,6 +156,19 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     })
     super.plot(newPlot)
   }
+
+  def xAxisCategories(categories: Iterable[String]): Highchart = {
+    val plot = plots.head
+    plots = plots.tail
+    val newPlot = plot.copy(xAxis = plot.xAxis.map{
+      axisArray => axisArray.map{ _.copy(
+        axisType = AxisType.category,
+        categories = Some(categories.toArray)
+      )}
+    })
+    super.plot(newPlot)
+  }
+
   def yAxis(label: String): Highchart = {
     val plot = plots.head
     plots = plots.tail
@@ -161,6 +177,7 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     })
     super.plot(newPlot)
   }
+
   def yAxisType(axisType: AxisType.Type): Highchart = {
     val plot = plots.head
     if (!AxisType.values.contains(axisType)) {
@@ -173,12 +190,26 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     })
     super.plot(newPlot)
   }
+
+  def yAxisCategories(categories: Iterable[String]): Highchart = {
+    val plot = plots.head
+    plots = plots.tail
+    val newPlot = plot.copy(yAxis = plot.yAxis.map{
+      axisArray => axisArray.map{ _.copy(
+        axisType = AxisType.category,
+        categories = Some(categories.toArray)
+      )}
+    })
+    super.plot(newPlot)
+  }
+
   def title(label: String): Highchart = {
     val plot = plots.head
     plots = plots.tail
     val newPlot = plot.copy(title = label)
     super.plot(newPlot)
   }
+
   // Assign names to series, if mis-matched lengths use the shorter one as a cut-off
   def legend(labels: Iterable[String]): Highchart = {
     val labelArray = labels.toArray
@@ -188,6 +219,7 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
     val newPlot = plot.copy(series = newSeries)
     super.plot(newPlot)
   }
+
   def xyToSeries[T1: Numeric, T2: Numeric](x: Iterable[T1], y: Iterable[T2], chartType: SeriesType.Type) =
     plot(Highchart(Series(x.zip(y).toSeq, chart = chartType)))
 
