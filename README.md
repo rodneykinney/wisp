@@ -90,11 +90,13 @@ Stylistic changes:
 	  "linear", "logarithmic",
 	  "datetime", "category"
 	])
+	xAxisCategories(Iterable[String])  create named labels for x-axis
 	yAxis(String)                      adds a label to y-axis
 	yAxisType([                        updates the y-axis type
 	  "linear", "logarithmic",
 	  "datetime", "category"
 	])
+	yAxisCategories(Iterable[String])  create named labels for y-axis
 	legend(Iterable[String])           adds a legend to the most recent plot
 	stack(["normal", "percent"])       stacks bars, columns, and lines relative to each other
 

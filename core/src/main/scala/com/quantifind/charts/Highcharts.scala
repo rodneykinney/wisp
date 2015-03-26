@@ -17,37 +17,66 @@ import scala.language.implicitConversions
 
 object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowerPriorityImplicits with HighchartsStyles {
 
+  implicit def mkStringIterableIterable[B: Numeric](ab: (Iterable[String], Iterable[B])) = new StringIterableIterable(ab._1, ab._2)
+  implicit def mkStringIterableIterable[B: Numeric](ab: (Iterable[(String, B)])) = new StringIterableIterable(ab.map(_._1), ab.map(_._2))
+
+  implicit def mkStringArrayArray[B: Numeric](ab: (Array[String], Array[B])) = new StringIterableIterable(ab._1.toSeq, ab._2.toSeq)
+  implicit def mkStringArrayArray[B: Numeric](ab: (Array[(String, B)])) = new StringIterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
+
   implicit def mkIterableIterable[A: Numeric, B: Numeric](ab: (Iterable[A], Iterable[B])) = new IterableIterable(ab._1, ab._2)
   implicit def mkIterableIterable[A: Numeric, B: Numeric](ab: (Iterable[(A, B)])) = new IterableIterable(ab.map(_._1), ab.map(_._2))
   implicit def mkIterableIterable[B: Numeric](b: (Iterable[B])) = new IterableIterable((0 until b.size), b)
+
+  implicit def mkArrayArray[A: Numeric, B: Numeric](ab: (Array[A], Array[B])) = new IterableIterable(ab._1.toSeq, ab._2.toSeq)
+  implicit def mkArrayArray[A: Numeric, B: Numeric](ab: (Array[(A, B)])) = new IterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
+  implicit def mkArrayArray[B: Numeric](b: (Array[B])) = new IterableIterable((0 until b.size), b.toSeq)
+
+  implicit def mkArrayIterable[A: Numeric, B: Numeric](ab: (Array[A], Iterable[B])) = new IterableIterable(ab._1.toSeq, ab._2)
+  implicit def mkIterableArray[A: Numeric, B: Numeric](ab: (Iterable[A], Array[B])) = new IterableIterable(ab._1, ab._2.toSeq)
 
   implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new IterableBinned[A](data, numBins)
   implicit def mkPair[A, B: Numeric](data: Iterable[(A, B)]) = new PairBinned(data)
   implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) = new TrueTripletBinned(data)
   implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new CoupledTripletBinned(data)
 
+  implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData = new IterableBinned[A](data.toSeq, numBins)
+  implicit def mkPair[A, B: Numeric](data: Array[(A, B)]) = new PairBinned(data.toSeq)
+  implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) = new TrueTripletBinned(data.toSeq)
+  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) = new CoupledTripletBinned(data.toSeq)
+
   def stopServer = stopWispServer
   def startServer() = startWispServer()
   def setPort(port: Int) = setWispPort(port)
 
+  private def addStyle[A, B, C, D](hc: Highchart, xy: IterablePair[A, B, C, D]) = {
+    xy match {
+      case s: StringIterableIterable[_] => xAxisCategories(hc, s.getCategories)
+      case _ => hc
+    }
+  }
+
   def area[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.area)
+    val hc = xyToSeries(xr, yr, SeriesType.area)
+    plot(addStyle(hc, xy))
   }
 
   def areaspline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.areaspline)
+    val hc = xyToSeries(xr, yr, SeriesType.areaspline)
+    plot(addStyle(hc, xy))
   }
 
   def bar[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.bar)
+    val hc = xyToSeries(xr, yr, SeriesType.bar)
+    plot(addStyle(hc, xy))
   }
 
   def column[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.column)
+    val hc = xyToSeries(xr, yr, SeriesType.column)
+    plot(addStyle(hc, xy))
   }
 
   def histogram[A: Numeric](data: Iterable[A], numBins: Int) = {
@@ -62,12 +91,14 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
 
   def line[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.line)
+    val hc = xyToSeries(xr, yr, SeriesType.line)
+    plot(addStyle(hc, xy))
   }
 
   def pie[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.pie)
+    val hc = xyToSeries(xr, yr, SeriesType.pie)
+    plot(addStyle(hc, xy))
   }
 
   def regression[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
@@ -78,12 +109,14 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
 
   def scatter[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.scatter)
+    val hc = xyToSeries(xr, yr, SeriesType.scatter)
+    plot(addStyle(hc, xy))
   }
 
   def spline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
-    xyToSeries(xr, yr, SeriesType.spline)
+    val hc = xyToSeries(xr, yr, SeriesType.spline)
+    plot(addStyle(hc, xy))
   }
 
   // Todo: can we disclose this information through reflection, instead of hardcoding it?
@@ -111,6 +144,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
         """"datetime", "category"""",
         "])"
       ) -> "updates the x-axis type",
+      List("xAxisCategories(Iterable[String])") -> "create named labels for x-axis",
       List("yAxis(String)") -> "adds a label to y-axis",
       List(
         "yAxisType([",
@@ -118,6 +152,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
         """"datetime", "category"""",
         "])"
       ) -> "updates the y-axis type",
+      List("yAxisCategories(Iterable[String])") -> "create named labels for y-axis",
       List("legend(Iterable[String])") -> "adds a legend to the most recent plot",
       List("""stack(["normal", "percent"])""") -> "stacks bars, columns, and lines relative to each other",
       List("unstack") -> "remove stacking"
