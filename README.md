@@ -2,6 +2,8 @@
 It focuses on existing web-based plotting libraries, and strives to bring the power and flexibility of web-based plotting
 tools to the scala console, while preserving an at-your-finger-tips feel readily found in matlab, R, and many other languages.
 
+![Wisp Logo](https://raw.github.com/quantifind/wisp/master/images/wisp_logo_markOnly_color.png)
+
 [Watch the introductory video](https://www.youtube.com/watch?v=LZH9rCEP-6w)
 
 <!---[![Build Status](https://travis-ci.org/quantifind/Wisp.svg?branch=master)](https://travis-ci.org/quantifind/Wisp)--->
@@ -9,9 +11,9 @@ tools to the scala console, while preserving an at-your-finger-tips feel readily
 
 <!---Todo: logo--->
 
-It is available on maven central. The alpha release of wisp is available as `0.0.2`. An sbt dependency would look like:
+It is available on maven central. The alpha release of wisp is available as `0.0.4`. An sbt dependency would look like:
 
-    "com.quantifind" %% "wisp" % "0.0.2"
+    "com.quantifind" %% "wisp" % "0.0.4"
 
 <!---Todo: Integration with 3-rd party libraries: Highcharts, vega, etc. etc.?--->
 
@@ -85,7 +87,17 @@ Stylistic changes:
 	unhold                             plots the next plot in a new chart
 	title(String)                      add a title to the most recent plot
 	xAxis(String)                      adds a label to the x-axis
+	xAxisType([                        updates the x-axis type
+	  "linear", "logarithmic",
+	  "datetime", "category"
+	])
+	xAxisCategories(Iterable[String])  create named labels for x-axis
 	yAxis(String)                      adds a label to y-axis
+	yAxisType([                        updates the y-axis type
+	  "linear", "logarithmic",
+	  "datetime", "category"
+	])
+	yAxisCategories(Iterable[String])  create named labels for y-axis
 	legend(Iterable[String])           adds a legend to the most recent plot
 	stack(["normal", "percent"])       stacks bars, columns, and lines relative to each other
 

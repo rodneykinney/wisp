@@ -24,8 +24,8 @@ object WispBuild extends Build {
 		BranchRelease.branchSettings ++
 		xerial.sbt.Sonatype.sonatypeSettings ++
 		Seq(
-			scalaVersion := "2.11.4",
-			crossScalaVersions := Seq("2.10.4", "2.11.4"),
+			scalaVersion := "2.11.6",
+			crossScalaVersions := Seq("2.10.5", "2.11.6"),
 			organization := "com.quantifind",
 			scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"),
 			retrieveManaged := true,
@@ -57,6 +57,11 @@ object WispBuild extends Build {
 			),
 
 			publishMavenStyle := true,
+
+			credentials += Credentials("Sonatype Nexus Repository Manager",
+				"oss.sonatype.org",
+				"change-during-deployment",
+				"change-during-deployment"),
 
 			publishTo <<= version { (v: String) =>
 				val nexus = "https://oss.sonatype.org/"
@@ -100,7 +105,8 @@ object WispBuild extends Build {
 			"net.databinder" %% "unfiltered-filter" % "0.8.3",
 			"net.databinder" %% "unfiltered-jetty" % "0.8.3",
 			"com.quantifind" %% "sumac" % "0.3.0",
-			"org.apache.commons" % "commons-math3" % "3.1"
+			"org.apache.commons" % "commons-math3" % "3.4.1",
+			"commons-io" % "commons-io" % "2.4"
 		)
 	)
 }

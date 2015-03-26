@@ -1,18 +1,18 @@
-package com.quantifind.charts
+package com.qf.charts.repl
 
-import org.scalatest.Matchers
-import org.scalatest.FunSuite
 import com.quantifind.charts.highcharts._
+import org.scalatest.{Matchers, FunSuite}
 import Highchart._
+
 
 /**
  * User: austin
- * Date: 10/4/13
+ * Date: 3/25/15
  */
-class HighchartTest extends FunSuite with Matchers {
+class ArrayTest extends FunSuite with Matchers {
 
-  test("Single point Highchart to json") {
-    val hc = Highchart(Seq(Series(Seq(Data(1, 2)))), chart = Chart(zoomType = Zoom.xy), xAxis = None, yAxis = None).toServiceFormat
+  test("Array - Single point Highchart to json") {
+    val hc = Highchart(Array(Series(Seq(Data(1, 2)))), chart = Chart(zoomType = Zoom.xy), xAxis = None, yAxis = None).toServiceFormat
 
     hc should be ("highcharts",
       Map(

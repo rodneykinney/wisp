@@ -1,12 +1,11 @@
 package com.quantifind.charts.repl
 
-import java.io.{PrintWriter, File}
+import java.io.{ PrintWriter, File }
 
-import com.quantifind.charts.highcharts.{Series, SeriesType, Highchart}
-import com.quantifind.charts.highcharts._
+import com.quantifind.charts.highcharts.Highchart
 import scala.concurrent.Promise
 import scala.util.Random
-
+import org.apache.commons.io.FileUtils
 /**
  * User: austin
  * Date: 12/3/14
@@ -40,19 +39,19 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
     pw.flush()
     pw.close()
 
-    plotServer.foreach{ps =>
+    plotServer.foreach { ps =>
       ps.p.success(())
       ps.p = Promise[Unit]()
     }
 
     val (serverRootFile, port, serverMode) = getWispServerInfo()
 
-    def link =
+    lazy val link =
       if (serverMode) {
-        temp.renameTo(serverRootFile)
+        FileUtils.deleteQuietly(serverRootFile)
+        FileUtils.moveFile(temp, serverRootFile)
         s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}"
-      }
-      else s"file://$temp"
+      } else s"file://$temp"
 
     openFirstWindow(link)
 
@@ -90,22 +89,22 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
       |    </title>
       |    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     """.stripMargin +
-    wispJsImports
+      wispJsImports
 
   def highchartsContainer(hc: Highchart): String = {
     val hash = hc.hashCode()
-    val containerId = Random.nextInt(1e10.toInt) + (if(hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
+    val containerId = Random.nextInt(1e10.toInt) + (if (hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
     highchartsContainer(hc.toJson, containerId)
   }
 
   def highchartsContainer(json: String, index: Int): String =
     containerDivs(index) + "\n" +
-    """
+      """
       |    <script type="text/javascript">
       |        $(function() {
       |            $('#container%s').highcharts(
     """.stripMargin.format(index.toString) +
-    """
+      """
       |                %s
       |            );
       |        });
@@ -117,64 +116,4 @@ trait WebPlotHighcharts extends WebPlot[Highchart] {
     s"""
       |    <div id="container%s" style="min-width: 400px; height: 400px; margin: 0 auto"></div>
     """.stripMargin.format(index.toString)
-}
-
-/**
- * Defines auxiliary tools available to plots, such as adding a Title
- */
-trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPlotHighcharts {
-  import Highchart._
-  override def plot(t: Highchart): Highchart = {
-    val newPlot =
-      if(isHeld && plots.nonEmpty) {
-        val oldplot = plots.head
-        plots = plots.tail
-        // Throws away things from t besides the series!
-        oldplot.copy(series = oldplot.series ++ t.series)
-      } else t
-    super.plot(newPlot)
-  }
-  def xAxis(label: String): Highchart = {
-    val plot = plots.head
-    plots = plots.tail
-    val newPlot = plot.copy(xAxis = label)
-    super.plot(newPlot)
-  }
-  def yAxis(label: String): Highchart = {
-    val plot = plots.head
-    plots = plots.tail
-    val newPlot = plot.copy(yAxis = label)
-    super.plot(newPlot)
-  }
-  def title(label: String): Highchart = {
-    val plot = plots.head
-    plots = plots.tail
-    val newPlot = plot.copy(title = label)
-    super.plot(newPlot)  
-  }
-  // Assign names to series, if mis-matched lengths use the shorter one as a cut-off
-  def legend(labels: Iterable[String]): Highchart = {
-    val labelArray = labels.toArray
-    val plot = plots.head
-    plots = plots.tail
-    val newSeries = plot.series.toSeq.zipWithIndex.map{case(s, idx) => if(idx >= labels.size) s else s.copy(name = Some(labelArray(idx)))}
-    val newPlot = plot.copy(series = newSeries)
-    super.plot(newPlot)
-  }
-  def xyToSeries[T1: Numeric, T2: Numeric](x: Iterable[T1], y: Iterable[T2], chartType: SeriesType.Type) =
-    plot(Highchart(Series(x.zip(y).toSeq, chart = chartType)))
-
-  def stack(stackType: Stacking.Type = Stacking.normal): Highchart = {
-    val plot = plots.head
-    plots = plots.tail
-    val newPlot = plot.copy(plotOptions = Some(PlotOptions(series = PlotOptionKey(stacking = stackType))))
-    super.plot(newPlot)
-  }
-
-  def unstack(): Highchart = {
-    val plot = plots.head
-    plots = plots.tail
-    val newPlot = plot.copy(plotOptions = Some(PlotOptions(series = PlotOptionKey(stacking = None))))
-    super.plot(newPlot)
-  }
 }
