@@ -144,6 +144,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
         """"datetime", "category"""",
         "])"
       ) -> "updates the x-axis type",
+      List("xAxisCategories(Iterable[String])") -> "create named labels for x-axis",
       List("yAxis(String)") -> "adds a label to y-axis",
       List(
         "yAxisType([",
@@ -151,6 +152,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
         """"datetime", "category"""",
         "])"
       ) -> "updates the y-axis type",
+      List("yAxisCategories(Iterable[String])") -> "create named labels for y-axis",
       List("legend(Iterable[String])") -> "adds a legend to the most recent plot",
       List("""stack(["normal", "percent"])""") -> "stacks bars, columns, and lines relative to each other",
       List("unstack") -> "remove stacking"
