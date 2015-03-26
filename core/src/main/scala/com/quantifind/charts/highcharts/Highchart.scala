@@ -135,6 +135,99 @@ case class Highchart(
                       yAxis: Option[Array[Axis]] = Some(Array(Axis()))
                       ) {
 
+  // Stylistic API
+  // Assigns a label to the axis
+  import Highchart._
+
+  // Axis Labels
+  def xAxis(label: String): Highchart = {
+    this.copy(xAxis = Some(xAxis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(title = label) }
+      case _ => Array(Axis(AxisTitle(label)))
+    }))
+  }
+  def yAxis(label: String): Highchart = {
+    this.copy(yAxis = Some(yAxis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(title = label) }
+      case _ => Array(Axis(AxisTitle(label)))
+    }))
+  }
+
+  // Change the type of the axis, ie logarithmic
+  // To convert to categories prefer xAxisCategories
+  def xAxisType(axisType: AxisType.Type): Highchart = {
+    if (!AxisType.values.contains(axisType)) {
+      println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
+      return this
+    }
+    this.copy(xAxis = Some(xAxis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(axisType = axisType) }
+      case _ => Array(Axis(axisType = axisType))
+    }))
+  }
+  def yAxisType(axisType: AxisType.Type): Highchart = {
+    if (!AxisType.values.contains(axisType)) {
+      println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
+      return this
+    }
+    this.copy(yAxis = Some(yAxis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(axisType = axisType) }
+      case _ => Array(Axis(axisType = axisType))
+    }))
+  }
+
+  // Modifies the axis to use String based category names instead of a numeric series
+  def xAxisCategories(categories: Iterable[String]): Highchart = {
+    this.copy(xAxis = Some(xAxis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map{ _.copy(
+        axisType = AxisType.category,
+        categories = Some(categories.toArray)
+      )}
+      case _ => Array(Axis(
+        axisType = AxisType.category,
+        categories = Some(categories.toArray)
+      ))
+    }))
+  }
+  def yAxisCategories(categories: Iterable[String]): Highchart = {
+    this.copy(yAxis = Some(yAxis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map{ _.copy(
+        axisType = AxisType.category,
+        categories = Some(categories.toArray)
+      )}
+      case _ => Array(Axis(
+        axisType = AxisType.category,
+        categories = Some(categories.toArray)
+      ))
+    }))
+  }
+
+  // Update the title at the top of the chart
+  def title(label: String): Highchart = {
+    this.copy(title = label)
+  }
+
+  // Assign names to series, if mis-matched lengths use the shorter one as a cut-off
+  def legend(labels: Iterable[String]): Highchart = {
+    val labelArray = labels.toArray
+    val newSeries = series.toSeq.zipWithIndex.map { case (s, idx) => if (idx >= labels.size) s else s.copy(name = Some(labelArray(idx))) }
+    this.copy(series = newSeries)
+  }
+
+  // Combines points with the ame x-value into a single visualization point
+  // normal stacking adds the values in order of the corresponding series
+  // percentage stacking creates a distribution from the values
+  def stack(stackType: Stacking.Type): Highchart = {
+    this.copy(plotOptions = Some(PlotOptions(series = PlotOptionKey(stacking = stackType))))
+  }
+
+  // Undoes the effect of calling stack()
+  def unstack(): Highchart = {
+    this.copy(plotOptions = Some(PlotOptions(series = PlotOptionKey(stacking = None))))
+  }
+
+  // Json manipulation
+
   import HighchartKey._
 
   implicit val formats = Serialization.formats(NoTypeHints)

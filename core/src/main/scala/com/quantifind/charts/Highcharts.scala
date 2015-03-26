@@ -48,39 +48,35 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
   def startServer() = startWispServer()
   def setPort(port: Int) = setWispPort(port)
 
-  private def addStyle[A, B, C, D](xy: IterablePair[A, B, C, D]) = {
+  private def addStyle[A, B, C, D](hc: Highchart, xy: IterablePair[A, B, C, D]) = {
     xy match {
-      case s: StringIterableIterable[_] => xAxisCategories(s.getCategories)
-      case _ =>
+      case s: StringIterableIterable[_] => xAxisCategories(hc, s.getCategories)
+      case _ => hc
     }
   }
 
   def area[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.area)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def areaspline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.areaspline)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def bar[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.bar)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def column[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.column)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def histogram[A: Numeric](data: Iterable[A], numBins: Int) = {
@@ -96,15 +92,13 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
   def line[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.line)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def pie[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.pie)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def regression[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
@@ -116,15 +110,13 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
   def scatter[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.scatter)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   def spline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.spline)
-    addStyle(xy)
-    hc
+    plot(addStyle(hc, xy))
   }
 
   // Todo: can we disclose this information through reflection, instead of hardcoding it?

@@ -14,8 +14,6 @@ class HighchartTest extends FunSuite with Matchers {
   test("Single point Highchart to json") {
     val hc = Highchart(Seq(Series(Seq(Data(1, 2)))), chart = Chart(zoomType = Zoom.xy), xAxis = None, yAxis = None).toServiceFormat
 
-//    hc._2("x")should be (0)
-
     hc should be ("highcharts",
       Map(
         "series" -> List(Map("data" -> List(Map("x" -> 1, "y" -> 2)), "type" -> "line")),
