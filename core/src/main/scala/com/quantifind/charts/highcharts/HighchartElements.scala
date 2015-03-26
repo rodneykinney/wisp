@@ -47,7 +47,7 @@ object AxisType {
 
 object SeriesType {
   type Type = String
-  val (area, areaspline, bar, column, line, pie, scatter, spline) = ("area", "areaspline", "bar", "column", "line", "pie", "scatter", "spline")
+  val (area, areaspline, bar, boxplot, column, line, pie, scatter, spline) = ("area", "areaspline", "bar", "boxplot", "column", "line", "pie", "scatter", "spline")
   def values = mutable.LinkedHashSet() ++ Seq(area, areaspline, bar, column, line, pie, scatter, spline)
 }
 

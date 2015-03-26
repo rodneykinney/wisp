@@ -1,7 +1,6 @@
 package com.quantifind.charts.highcharts
 
 import org.json4s.NoTypeHints
-import org.json4s.JsonDSL.WithDouble._
 import org.json4s.jackson.Serialization
 import scala.collection._
 import scala.language.implicitConversions
@@ -234,21 +233,24 @@ case class Highchart(
   def toJson = Serialization.write(jsonMap)
 
   def jsonMap: Map[String, Any] = {
-    if(series.size == 0) System.err.println("Tried to create a chart with no series")
+    if(series.size == 0) System.err.println("Warning: created a plot with no data - visualization will be empty")
 
     // Because we want to default to turboThreshold off (0) we control it as a boolean at the top-most level
     // As otherwise it is a per-type plotOption
-    val turboOutput: Map[String, Any] =
+    val turboOutput: Map[String, Map[String, Any]] =
       if(setTurboThreshold) {
         series.filter(_.chart != Some(SeriesType.pie)).flatMap(_.chart).map { s =>
           s -> Map("turboThreshold" -> 0)
         }.toMap
-      } else Map.empty[String, Any]
+      } else Map.empty[String, Map[String, Any]]
 
     // Todo: can we do better?
     // Check if it exists
     val finalPlotOption = if(plotOptions.isDefined) {
-      Map(PlotOptions.name -> {optionToServiceFormat(plotOptions)(PlotOptions.name).asInstanceOf[Map[String, Any]] ++ turboOutput})
+      val plotOptionsMap = optionToServiceFormat(plotOptions)(PlotOptions.name).asInstanceOf[Map[String, Map[String, Any]]]
+      val keys = plotOptionsMap.keySet ++ turboOutput.keySet
+      val combinedMap = keys.map{key => key -> (plotOptionsMap.getOrElse(key, Map()) ++ turboOutput.getOrElse(key, Map()))}.toMap
+      Map(PlotOptions.name -> combinedMap).asInstanceOf[Map[String, Any]]
     } else {
       Map(PlotOptions.name -> turboOutput)
     }
@@ -409,7 +411,7 @@ case class ToolTip(
                     valuePrefix: Option[String] = None,
                     valueSuffix: Option[String] = None,
                     xDateFormat: Option[String] = None
-                    ) extends HighchartKey("ToolTip") {
+                    ) extends HighchartKey("tooltip") {
 
   def toServiceFormat =
     Map(
@@ -456,19 +458,71 @@ case class Series(
   }
 }
 
-case class Data[X: Numeric, Y: Numeric](
-                                         x: X,
-                                         y: Y,
-                                         color: Option[Color.Type] = None,
-                                         //dataLabels
-                                         //events
-                                         // id
-                                         name: Option[String] = None
-                                         ) {
+trait Data[X, Y] {
+  def toServiceFormat: Map[String, Any]
+}
+
+object Data {
+  def apply[X: Numeric, Y: Numeric](
+                                     x: X,
+                                     y: Y,
+                                     color: Option[Color.Type] = None,
+                                     //dataLabels
+                                     //events
+                                     // id
+                                     name: Option[String] = None
+                                     ): DataPair[X, Y] = DataPair(x, y, color, name)
+
+  def apply[T: Numeric](
+                         x: Any, // TODO x type
+                         low: T,
+                         q1: T,
+                         median: T,
+                         q3: T,
+                         high: T
+                         // todo all the other options...
+                         ): BoxplotData[T] = BoxplotData(Some(x), low, q1, median, q3, high)
+
+  def apply[T: Numeric](
+                         low: T,
+                         q1: T,
+                         median: T,
+                         q3: T,
+                         high: T
+                         // todo all the other options...
+                         ): BoxplotData[T] = BoxplotData(None, low, q1, median, q3, high)
+}
+
+// Most series take in data points as (x, y)
+case class DataPair[X: Numeric, Y: Numeric](
+                                             x: X,
+                                             y: Y,
+                                             color: Option[Color.Type] = None,
+                                             //dataLabels
+                                             //events
+                                             // id
+                                             name: Option[String] = None
+                                             ) extends Data[X, Y] {
 
   def toServiceFormat = {
     Map("x" -> x, "y" -> y) ++
       Map("color" -> color, "name" -> name).flatMap{HighchartKey.flatten}
+  }
+}
+
+// Box plot takes in data as an array of size five: lower-whisker, lower-box, median, upper-box, upper-whisker
+case class BoxplotData[T: Numeric](
+                                x: Option[Any], // TODO x type
+                                low: T,
+                                q1: T,
+                                median: T,
+                                q3: T,
+                                high: T
+                                // todo all the other options...
+                                ) extends Data[T, T] {
+  def toServiceFormat = {
+    Map("low" -> low, "q1" -> q1, "median" -> median, "q3" -> q3, "high" -> high) ++
+      Map("x" -> x).flatMap{HighchartKey.flatten}
   }
 }
 
