@@ -111,6 +111,15 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
     plot(addStyle(hc, xy))
   }
 
+  def heatmap[T: Numeric](data: Iterable[T]) = {
+    val size = data.size
+    val _data = data.grouped(math.sqrt(size).toInt).zipWithIndex.flatMap{case(itr, x) => itr.zipWithIndex.map{case(i, y) => HeatmapData(x, y, i)}}.toIterable
+    plot(Highchart(
+      series = Seq(Series(data = _data, chart = Some(SeriesType.heatmap), dataLabels = Some(DataLabels(enabled = Some(true))))),
+      colorAxis = Some(ColorAxis(minColor = Some("#FFFFFF"), maxColor = Some("#82CCFA")))
+    ))
+  }
+
   def histogram[A: Numeric](data: Iterable[A], numBins: Int) = {
     val binCounts = binIterableNumBins(data, numBins).toBinned().toSeq
     plot(Histogram.histogram(binCounts))

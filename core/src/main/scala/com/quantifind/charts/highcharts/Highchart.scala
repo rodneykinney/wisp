@@ -122,6 +122,7 @@ case class Highchart(
                       series: Traversable[Series],
                       title: Option[Title] = Some(Title()),
                       chart: Option[Chart] = Some(Chart()),
+                      colorAxis: Option[ColorAxis] = None,
                       colors: Option[Array[Color.Type]] = None,
                       credits: Option[Credits] = Some(Credits()),
                       exporting: Option[Exporting] = Some(Exporting()),
@@ -288,7 +289,7 @@ case class Highchart(
         hckTraversableToServiceFormat(series) ++
         Seq(xAxis, yAxis).flatMap(optionArrayAxisToServiceFormat) ++
         optionArrayColorToServiceFormat(colorWrapper) ++
-        Seq(chart, title, exporting, credits, legend, tooltip, subtitle).flatMap(optionToServiceFormat)
+        Seq(chart, colorAxis, title, exporting, credits, legend, tooltip, subtitle).flatMap(optionToServiceFormat)
   }
 
   def toServiceFormat: (String, Map[String, Any]) = {
@@ -329,6 +330,21 @@ case class Chart(
                   ) extends HighchartKey("chart") {
   def toServiceFormat = Map(
     "zoomType" -> zoomType
+  ).flatMap(HighchartKey.flatten)
+}
+
+case class ColorAxis(
+                     min: Option[Int] = None,
+                     max: Option[Int] = None,
+                     minColor: Option[Color.Type] = None,
+                     maxColor: Option[Color.Type] = None
+                      ) extends HighchartKey("colorAxis") {
+
+  def toServiceFormat = Map(
+    "min" -> min,
+    "max" -> max,
+    "minColor" -> minColor,
+    "maxColor" -> maxColor
   ).flatMap(HighchartKey.flatten)
 }
 
@@ -440,6 +456,7 @@ case class ToolTip(
 
 case class Series(
                     data: Traversable[Data[_, _]],
+                    dataLabels: Option[DataLabels] = None,
                     index: Option[Int] = None,
                     legendIndex: Option[Int] = None,
                     name: Option[String] = None,
@@ -454,12 +471,23 @@ case class Series(
   def toServiceFormat: Map[String, Any] = {
     if (data.size == 0) System.err.println("Tried to create a series with no data")
     Map("data" -> data.map(_.toServiceFormat).toSeq) ++
-    Map("xAxis" -> xAxis, "yAxis" -> yAxis, "type" -> chart, "color" -> color, "visible" -> visible, " index" -> index, "legendIndex" -> legendIndex, "name" -> name).flatMap{HighchartKey.flatten}
+    HighchartKey.optionToServiceFormat(dataLabels) ++
+    Map("xAxis" -> xAxis, "yAxis" -> yAxis, "type" -> chart, "color" -> color,
+      "visible" -> visible, " index" -> index, "legendIndex" -> legendIndex, "name" -> name).flatMap{HighchartKey.flatten}
+  }
+}
+
+case class DataLabels (
+                        enabled: Option[Boolean] = None,
+                        __name: String = "dataLabels"
+                        ) extends HighchartKey(__name) {
+  def toServiceFormat = {
+    Map("enabled" -> enabled).flatMap{HighchartKey.flatten}
   }
 }
 
 trait Data[X, Y] {
-  def toServiceFormat: Map[String, Any]
+  def toServiceFormat: Any
 }
 
 object Data {
@@ -523,6 +551,16 @@ case class BoxplotData[T: Numeric](
   def toServiceFormat = {
     Map("low" -> low, "q1" -> q1, "median" -> median, "q3" -> q3, "high" -> high) ++
       Map("x" -> x).flatMap{HighchartKey.flatten}
+  }
+}
+
+case class HeatmapData[T: Numeric](
+                                x: Int,
+                                y: Int,
+                                point: T
+                                ) extends Data[T, T] {
+  def toServiceFormat = {
+    Array(x, y, point)
   }
 }
 
