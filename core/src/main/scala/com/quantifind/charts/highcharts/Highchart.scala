@@ -1,5 +1,6 @@
 package com.quantifind.charts.highcharts
 
+import com.quantifind.charts.repl.IterablePair
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import scala.collection._
@@ -20,19 +21,26 @@ import scala.language.implicitConversions
  */
 object Highchart {
   // Data
-  implicit def traversableToTraversableData[X, Y](seq: Traversable[(X, Y)]) = seq.map{case(x, y) => Data(x, y)}
+  implicit def traversableToTraversableData[X, Y](seq: Traversable[(X, Y)]) = seq.map { case (x, y) => Data(x, y) }
 
   // Series
   implicit def traversableToTraversableSeries[X: Numeric, Y: Numeric](seq: Traversable[(X, Y)]) = seriesToTraversableSeries(traversableToSeries(seq))
+
   implicit def traversableToSeries[X: Numeric, Y: Numeric](seq: Traversable[(X, Y)]) = Series(traversableToTraversableData(seq))
+
   implicit def seriesToTraversableSeries(series: Series) = Seq(series)
+
   implicit def traversableToSomeArray(t: Traversable[Any]) = Some(t.toArray) // for axes
 
   // Axis
   implicit def axisTitleOptionToArrayAxes(axisTitle: Option[AxisTitle]) = Some(Array(Axis(axisTitle)))
+
   implicit def axisToArrayAxes(axis: Axis) = Some(Array(axis))
+
   implicit def axesSeqToSomeAxesArray(axes: Seq[Axis]) = Some(axes.toArray)
+
   implicit def stringToAxisTitle(s: String) = Some(AxisTitle(s))
+
   implicit def stringToAxis(s: String): Option[Array[Axis]] = axisTitleOptionToArrayAxes(stringToAxisTitle(s))
 
   // Colors
@@ -46,6 +54,10 @@ object Highchart {
 
   // value -> Some(value)
   implicit def optionWrap[T](value: T): Option[T] = Option(value)
+
+  def apply[T1, T2](x: Iterable[T1], y: Iterable[T2], chartType: SeriesType.Type): Highchart =
+    Highchart(Series(x.zip(y).toSeq, chart = chartType))
+
 }
 
 /**
@@ -83,7 +95,7 @@ object HighchartKey {
   }
 
   def hckTraversableToServiceFormat(t: Traversable[HighchartKey]): Map[String, Any] = {
-    if(t.isEmpty) Map()
+    if (t.isEmpty) Map()
     else Map(t.head._name -> t.map(_.toServiceFormat))
   }
 
@@ -92,8 +104,9 @@ object HighchartKey {
     case Some(v) => Some(o._1, v)
   }
 
-  def someStyleToServiceFormat(style: Option[CSSObject]) =
-  {if (style != None) Map("style" -> style.get.toString()) else Map()}
+  def someStyleToServiceFormat(style: Option[CSSObject]) = {
+    if (style != None) Map("style" -> style.get.toString()) else Map()
+  }
 }
 
 // Not going to implement: loading
@@ -119,35 +132,41 @@ object HighchartKey {
  * @param yAxis
  */
 case class Highchart(
-                      series: Traversable[Series],
-                      title: Option[Title] = Some(Title()),
-                      chart: Option[Chart] = Some(Chart()),
-                      colors: Option[Array[Color.Type]] = None,
-                      credits: Option[Credits] = Some(Credits()),
-                      exporting: Option[Exporting] = Some(Exporting()),
-                      legend: Option[Legend] = None,
-                      plotOptions: Option[PlotOptions] = Some(PlotOptions()),
-                      subtitle: Option[Title] = None,
-                      setTurboThreshold: Boolean = true,
-                      tooltip: Option[ToolTip] = None,
-                      xAxis: Option[Array[Axis]] = Some(Array(Axis())),
-                      yAxis: Option[Array[Axis]] = Some(Array(Axis()))
-                      ) {
+    series: Traversable[Series],
+    title: Option[Title] = Some(Title()),
+    chart: Option[Chart] = Some(Chart()),
+    colors: Option[Array[Color.Type]] = None,
+    credits: Option[Credits] = Some(Credits()),
+    exporting: Option[Exporting] = Some(Exporting()),
+    legend: Option[Legend] = None,
+    plotOptions: Option[PlotOptions] = Some(PlotOptions()),
+    subtitle: Option[Title] = None,
+    setTurboThreshold: Boolean = true,
+    tooltip: Option[ToolTip] = None,
+    xAxis: Option[Array[Axis]] = Some(Array(Axis())),
+    yAxis: Option[Array[Axis]] = Some(Array(Axis()))
+    ) {
 
   // Stylistic API
   // Assigns a label to the axis
+
   import Highchart._
 
   // Axis Labels
   def xAxis(label: String): Highchart = {
     this.copy(xAxis = Some(xAxis match {
-      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(title = label) }
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map {
+        _.copy(title = label)
+      }
       case _ => Array(Axis(AxisTitle(label)))
     }))
   }
+
   def yAxis(label: String): Highchart = {
     this.copy(yAxis = Some(yAxis match {
-      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(title = label) }
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map {
+        _.copy(title = label)
+      }
       case _ => Array(Axis(AxisTitle(label)))
     }))
   }
@@ -160,17 +179,22 @@ case class Highchart(
       return this
     }
     this.copy(xAxis = Some(xAxis match {
-      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(axisType = axisType) }
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map {
+        _.copy(axisType = axisType)
+      }
       case _ => Array(Axis(axisType = axisType))
     }))
   }
+
   def yAxisType(axisType: AxisType.Type): Highchart = {
     if (!AxisType.values.contains(axisType)) {
       println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
       return this
     }
     this.copy(yAxis = Some(yAxis match {
-      case Some(axisArray) if axisArray.size > 0 => axisArray.map { _.copy(axisType = axisType) }
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map {
+        _.copy(axisType = axisType)
+      }
       case _ => Array(Axis(axisType = axisType))
     }))
   }
@@ -178,22 +202,27 @@ case class Highchart(
   // Modifies the axis to use String based category names instead of a numeric series
   def xAxisCategories(categories: Iterable[String]): Highchart = {
     this.copy(xAxis = Some(xAxis match {
-      case Some(axisArray) if axisArray.size > 0 => axisArray.map{ _.copy(
-        axisType = AxisType.category,
-        categories = Some(categories.toArray)
-      )}
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map {
+        _.copy(
+          axisType = AxisType.category,
+          categories = Some(categories.toArray)
+        )
+      }
       case _ => Array(Axis(
         axisType = AxisType.category,
         categories = Some(categories.toArray)
       ))
     }))
   }
+
   def yAxisCategories(categories: Iterable[String]): Highchart = {
     this.copy(yAxis = Some(yAxis match {
-      case Some(axisArray) if axisArray.size > 0 => axisArray.map{ _.copy(
-        axisType = AxisType.category,
-        categories = Some(categories.toArray)
-      )}
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map {
+        _.copy(
+          axisType = AxisType.category,
+          categories = Some(categories.toArray)
+        )
+      }
       case _ => Array(Axis(
         axisType = AxisType.category,
         categories = Some(categories.toArray)
@@ -202,11 +231,13 @@ case class Highchart(
   }
 
   // Update the title at the top of the chart
+  @deprecated
   def title(label: String): Highchart = {
     this.copy(title = label)
   }
 
   // Assign names to series, if mis-matched lengths use the shorter one as a cut-off
+  @deprecated
   def legend(labels: Iterable[String]): Highchart = {
     val labelArray = labels.toArray
     val newSeries = series.toSeq.zipWithIndex.map { case (s, idx) => if (idx >= labels.size) s else s.copy(name = Some(labelArray(idx))) }
@@ -230,15 +261,16 @@ case class Highchart(
   import HighchartKey._
 
   implicit val formats = Serialization.formats(NoTypeHints)
+
   def toJson = Serialization.write(jsonMap)
 
   def jsonMap: Map[String, Any] = {
-    if(series.size == 0) System.err.println("Warning: created a plot with no data - visualization will be empty")
+    if (series.size == 0) System.err.println("Warning: created a plot with no data - visualization will be empty")
 
     // Because we want to default to turboThreshold off (0) we control it as a boolean at the top-most level
     // As otherwise it is a per-type plotOption
     val turboOutput: Map[String, Map[String, Any]] =
-      if(setTurboThreshold) {
+      if (setTurboThreshold) {
         series.filter(_.chart != Some(SeriesType.pie)).flatMap(_.chart).map { s =>
           s -> Map("turboThreshold" -> 0)
         }.toMap
@@ -246,10 +278,10 @@ case class Highchart(
 
     // Todo: can we do better?
     // Check if it exists
-    val finalPlotOption = if(plotOptions.isDefined) {
+    val finalPlotOption = if (plotOptions.isDefined) {
       val plotOptionsMap = optionToServiceFormat(plotOptions)(PlotOptions.name).asInstanceOf[Map[String, Map[String, Any]]]
       val keys = plotOptionsMap.keySet ++ turboOutput.keySet
-      val combinedMap = keys.map{key => key -> (plotOptionsMap.getOrElse(key, Map()) ++ turboOutput.getOrElse(key, Map()))}.toMap
+      val combinedMap = keys.map { key => key -> (plotOptionsMap.getOrElse(key, Map()) ++ turboOutput.getOrElse(key, Map())) }.toMap
       Map(PlotOptions.name -> combinedMap).asInstanceOf[Map[String, Any]]
     } else {
       Map(PlotOptions.name -> turboOutput)
@@ -259,24 +291,24 @@ case class Highchart(
       case (Some(c), _) if c.size > 0 => colors
       case (_, Some(y)) => {
         val styleColors = y.flatMap(_.title).flatMap(_.style).flatMap(_.color)
-        if(styleColors.size == series.size) Some(styleColors)
+        if (styleColors.size == series.size) Some(styleColors)
         else None
       }
       case _ => None
     }
 
     (yAxis, series) match {
-      case (Some(y), s) => if(y.size > 1 && y.size == s.size) y.zip(s.toSeq).zipWithIndex.foreach{case((axis, ser), index) =>
-        if(axis.id.isEmpty) axis.id = Some(index.toString())
-        if(ser.yAxis.isEmpty) ser.yAxis = axis.id
+      case (Some(y), s) => if (y.size > 1 && y.size == s.size) y.zip(s.toSeq).zipWithIndex.foreach { case ((axis, ser), index) =>
+        if (axis.id.isEmpty) axis.id = Some(index.toString())
+        if (ser.yAxis.isEmpty) ser.yAxis = axis.id
       }
       case _ =>
     }
 
     (xAxis, series) match {
-      case (Some(x), s) => if(x.size > 1 && x.size == s.size) x.zip(s.toSeq).zipWithIndex.foreach{case((axis, ser), index) =>
-        if(axis.id.isEmpty) axis.id = Some(index.toString())
-        if(ser.xAxis.isEmpty) ser.xAxis = axis.id
+      case (Some(x), s) => if (x.size > 1 && x.size == s.size) x.zip(s.toSeq).zipWithIndex.foreach { case ((axis, ser), index) =>
+        if (axis.id.isEmpty) axis.id = Some(index.toString())
+        if (ser.xAxis.isEmpty) ser.xAxis = axis.id
       }
       case _ =>
     }
@@ -284,7 +316,7 @@ case class Highchart(
     // Axis defaults to yAxis, rename xAxes
     xAxis.map(_.foreach(_.__name = "xAxis"))
 
-      finalPlotOption ++
+    finalPlotOption ++
         hckTraversableToServiceFormat(series) ++
         Seq(xAxis, yAxis).flatMap(optionArrayAxisToServiceFormat) ++
         optionArrayColorToServiceFormat(colorWrapper) ++
@@ -292,7 +324,7 @@ case class Highchart(
   }
 
   def toServiceFormat: (String, Map[String, Any]) = {
-     "highcharts" -> jsonMap
+    "highcharts" -> jsonMap
   }
 }
 
@@ -300,83 +332,84 @@ case class Highchart(
 // but I was not happy with Enumeration returning type Value instead of type String
 // I need to look into jerkson or something similar for case class -> json conversion
 case class Title(
-                  text: String = "", // Override default "Chart title"
-                  align: Option[Alignment.Type] = None,
-                  floating: Option[Boolean] = None,
-                  style: Option[CSSObject] = None,
-                  useHTML: Option[Boolean] = None,
-                  verticalAlign: Option[VerticalAlignment.Type] = None,
-                  x: Option[Int] = None,
-                  y: Option[Int] = None,
-                  var __name: String = "title"
-                  ) extends HighchartKey(__name) {
+    text: String = "", // Override default "Chart title"
+    align: Option[Alignment.Type] = None,
+    floating: Option[Boolean] = None,
+    style: Option[CSSObject] = None,
+    useHTML: Option[Boolean] = None,
+    verticalAlign: Option[VerticalAlignment.Type] = None,
+    x: Option[Int] = None,
+    y: Option[Int] = None,
+    var __name: String = "title"
+    ) extends HighchartKey(__name) {
   def toServiceFormat =
     Map("text" -> text) ++
-      Map(
-        "align" -> align,
-        "floating" -> floating,
-        "useHTML" -> useHTML,
-        "verticalAlign" -> verticalAlign,
-        "x" -> x,
-        "y" -> y
-      ).flatMap(HighchartKey.flatten)  ++
-      HighchartKey.someStyleToServiceFormat(style)
+        Map(
+          "align" -> align,
+          "floating" -> floating,
+          "useHTML" -> useHTML,
+          "verticalAlign" -> verticalAlign,
+          "x" -> x,
+          "y" -> y
+        ).flatMap(HighchartKey.flatten) ++
+        HighchartKey.someStyleToServiceFormat(style)
 }
 
 case class Chart(
-                  // todo, many other chart options
-                  zoomType: Option[Zoom.Type] = Some(Zoom.xy)
-                  ) extends HighchartKey("chart") {
+    // todo, many other chart options
+    zoomType: Option[Zoom.Type] = Some(Zoom.xy)
+    ) extends HighchartKey("chart") {
   def toServiceFormat = Map(
     "zoomType" -> zoomType
   ).flatMap(HighchartKey.flatten)
 }
 
 case class Credits(
-                    enabled: Option[Boolean] = None,
-                    href: String = "", // Override default Highcharts
-                    position: Option[Position] = None,
-                    style: Option[CSSObject] = None,
-                    text: String = "" // Override default Highcharts
-                    ) extends HighchartKey("credits") {
+    enabled: Option[Boolean] = None,
+    href: String = "", // Override default Highcharts
+    position: Option[Position] = None,
+    style: Option[CSSObject] = None,
+    text: String = "" // Override default Highcharts
+    ) extends HighchartKey("credits") {
   def toServiceFormat = Map(
     "href" -> href,
     "text" -> text
   ) ++
-    Map("style" -> style, "enabled" -> enabled).flatMap(HighchartKey.flatten) ++
-    HighchartKey.optionToServiceFormat(position) ++
-    HighchartKey.someStyleToServiceFormat(style)}
+      Map("style" -> style, "enabled" -> enabled).flatMap(HighchartKey.flatten) ++
+      HighchartKey.optionToServiceFormat(position) ++
+      HighchartKey.someStyleToServiceFormat(style)
+}
 
 case class Exporting(
-                      //buttons
-                      //chartOptions
-                      filename: String = "chart",
-                      scale: Option[Int] = None,
-                      sourceHeight: Option[Int] = None,
-                      sourceWidth: Option[Int] = None,
-                      _type: Option[String] = None,
-                      url: Option[String] = None,
-                      width: Option[Int] = None
-                      ) extends HighchartKey("exporting") {
+    //buttons
+    //chartOptions
+    filename: String = "chart",
+    scale: Option[Int] = None,
+    sourceHeight: Option[Int] = None,
+    sourceWidth: Option[Int] = None,
+    _type: Option[String] = None,
+    url: Option[String] = None,
+    width: Option[Int] = None
+    ) extends HighchartKey("exporting") {
 
   def toServiceFormat =
     Map("filename" -> filename) ++
-      Map(
-        "scale" -> scale,
-        "type" -> _type,
-        "url" -> url,
-        "sourceHeight" -> sourceHeight,
-        "sourceWidth" -> sourceWidth,
-        "width" -> width
-      ).flatMap(HighchartKey.flatten)
+        Map(
+          "scale" -> scale,
+          "type" -> _type,
+          "url" -> url,
+          "sourceHeight" -> sourceHeight,
+          "sourceWidth" -> sourceWidth,
+          "width" -> width
+        ).flatMap(HighchartKey.flatten)
 }
 
 case class Position(
-                     align: Option[Alignment.Type] = None,
-                     x: Option[Int] = None,
-                     verticalAlign: Option[VerticalAlignment.Type] = None,
-                     y: Option[Int] = None
-                     ) extends HighchartKey("position") {
+    align: Option[Alignment.Type] = None,
+    x: Option[Int] = None,
+    verticalAlign: Option[VerticalAlignment.Type] = None,
+    y: Option[Int] = None
+    ) extends HighchartKey("position") {
   def toServiceFormat = Map(
     "align" -> align,
     "x" -> x,
@@ -386,32 +419,32 @@ case class Position(
 }
 
 case class ToolTip(
-                    animation: Option[Boolean] = None,
-                    backgroundColor: Option[Color.Type] = None,
-                    borderColor: Option[Color.Type] = None,
-                    borderRadius: Option[Int] = None,
-                    borderWidth: Option[Int] = None,
-                    // crosshairs
-                    dateTimeLabelFormats: Option[DateTimeFormats] = None, // this has different defaults than the Axis
-                    enabled: Option[Boolean] = None,
-                    followPointer: Option[Boolean] = None,
-                    followTouchMove: Option[Boolean] = None,
-                    footerFormat: Option[String] = None,
-                    //formatter
-                    //headerFormat
-                    hideDelay: Option[Int] = None,
-                    //pointFormat
-                    //positioner
-                    shadow: Option[Boolean] = None,
-                    shared: Option[Boolean] = None,
-                    snap: Option[Int] = None,
-                    //style
-                    useHTML: Option[Boolean] = None,
-                    valueDecimals: Option[Int] = None,
-                    valuePrefix: Option[String] = None,
-                    valueSuffix: Option[String] = None,
-                    xDateFormat: Option[String] = None
-                    ) extends HighchartKey("tooltip") {
+    animation: Option[Boolean] = None,
+    backgroundColor: Option[Color.Type] = None,
+    borderColor: Option[Color.Type] = None,
+    borderRadius: Option[Int] = None,
+    borderWidth: Option[Int] = None,
+    // crosshairs
+    dateTimeLabelFormats: Option[DateTimeFormats] = None, // this has different defaults than the Axis
+    enabled: Option[Boolean] = None,
+    followPointer: Option[Boolean] = None,
+    followTouchMove: Option[Boolean] = None,
+    footerFormat: Option[String] = None,
+    //formatter
+    //headerFormat
+    hideDelay: Option[Int] = None,
+    //pointFormat
+    //positioner
+    shadow: Option[Boolean] = None,
+    shared: Option[Boolean] = None,
+    snap: Option[Int] = None,
+    //style
+    useHTML: Option[Boolean] = None,
+    valueDecimals: Option[Int] = None,
+    valuePrefix: Option[String] = None,
+    valueSuffix: Option[String] = None,
+    xDateFormat: Option[String] = None
+    ) extends HighchartKey("tooltip") {
 
   def toServiceFormat =
     Map(
@@ -434,27 +467,36 @@ case class ToolTip(
       "valueSuffix" -> valueSuffix,
       "xDateFormat" -> xDateFormat
     ).flatMap(HighchartKey.flatten) ++
-      HighchartKey.optionToServiceFormat(dateTimeLabelFormats)
+        HighchartKey.optionToServiceFormat(dateTimeLabelFormats)
 
 }
 
 case class Series(
-                    data: Traversable[Data[_, _]],
-                    index: Option[Int] = None,
-                    legendIndex: Option[Int] = None,
-                    name: Option[String] = None,
-                    chart: Option[SeriesType.Type] = Some(SeriesType.line), // for turbo threshold default
-                    visible: Option[Boolean] = None,
-                    color: Option[Color.Type] = None,
-                    var xAxis: Option[String] = None,
-                    var yAxis: Option[String] = None,
-                    __name: String = "series"
-) extends HighchartKey(__name) {
+    data: Traversable[Data[_, _]],
+    index: Option[Int] = None,
+    legendIndex: Option[Int] = None,
+    name: Option[String] = None,
+    chart: Option[SeriesType.Type] = Some(SeriesType.line), // for turbo threshold default
+    visible: Option[Boolean] = None,
+    color: Option[Color.Type] = None,
+    var xAxis: Option[String] = None,
+    var yAxis: Option[String] = None,
+    __name: String = "series"
+    ) extends HighchartKey(__name) {
 
   def toServiceFormat: Map[String, Any] = {
     if (data.size == 0) System.err.println("Tried to create a series with no data")
     Map("data" -> data.map(_.toServiceFormat).toSeq) ++
-    Map("xAxis" -> xAxis, "yAxis" -> yAxis, "type" -> chart, "color" -> color, "visible" -> visible, " index" -> index, "legendIndex" -> legendIndex, "name" -> name).flatMap{HighchartKey.flatten}
+        Map("xAxis" -> xAxis, "yAxis" -> yAxis, "type" -> chart, "color" -> color, "visible" -> visible, " index" -> index, "legendIndex" -> legendIndex, "name" -> name).flatMap {
+          HighchartKey.flatten
+        }
+  }
+}
+
+object Series {
+  def apply[A, B](xy: IterablePair[A, B], chartType: SeriesType.Type): Series = {
+    val (x, y) = xy.toIterables
+    Series(x.zip(y).map { case (a, b) => Data(a, b) }, chart = Some(chartType))
   }
 }
 
@@ -464,65 +506,69 @@ trait Data[X, Y] {
 
 object Data {
   def apply[X, Y](
-                                     x: X,
-                                     y: Y,
-                                     color: Option[Color.Type] = None,
-                                     //dataLabels
-                                     //events
-                                     // id
-                                     name: Option[String] = None
-                                     ): DataPair[X, Y] = DataPair(x, y, color, name)
+      x: X,
+      y: Y,
+      color: Option[Color.Type] = None,
+      //dataLabels
+      //events
+      // id
+      name: Option[String] = None
+      ): DataPair[X, Y] = DataPair(x, y, color, name)
 
   def apply[T](
-                         x: Any, // TODO x type
-                         low: T,
-                         q1: T,
-                         median: T,
-                         q3: T,
-                         high: T
-                         // todo all the other options...
-                         ): BoxplotData[T] = BoxplotData(Some(x), low, q1, median, q3, high)
+      x: Any, // TODO x type
+      low: T,
+      q1: T,
+      median: T,
+      q3: T,
+      high: T
+      // todo all the other options...
+      ): BoxplotData[T] = BoxplotData(Some(x), low, q1, median, q3, high)
 
   def apply[T](
-                         low: T,
-                         q1: T,
-                         median: T,
-                         q3: T,
-                         high: T
-                         // todo all the other options...
-                         ): BoxplotData[T] = BoxplotData(None, low, q1, median, q3, high)
+      low: T,
+      q1: T,
+      median: T,
+      q3: T,
+      high: T
+      // todo all the other options...
+      ): BoxplotData[T] = BoxplotData(None, low, q1, median, q3, high)
 }
 
 // Most series take in data points as (x, y)
 case class DataPair[X, Y](
-                                             x: X,
-                                             y: Y,
-                                             color: Option[Color.Type] = None,
-                                             //dataLabels
-                                             //events
-                                             // id
-                                             name: Option[String] = None
-                                             ) extends Data[X, Y] {
+    x: X,
+    y: Y,
+    color: Option[Color.Type] = None,
+    //dataLabels
+    //events
+    // id
+    name: Option[String] = None
+    ) extends Data[X, Y] {
 
   def toServiceFormat = {
     Map("x" -> x, "y" -> y) ++
-      Map("color" -> color, "name" -> name).flatMap{HighchartKey.flatten}
+        Map("color" -> color, "name" -> name).flatMap {
+          HighchartKey.flatten
+        }
   }
 }
 
 // Box plot takes in data as an array of size five: lower-whisker, lower-box, median, upper-box, upper-whisker
 case class BoxplotData[T](
-                                x: Option[Any], // TODO x type
-                                low: T,
-                                q1: T,
-                                median: T,
-                                q3: T,
-                                high: T
-                                // todo all the other options...
-                                ) extends Data[T, T] {
+    x: Option[Any], // TODO x type
+    low: T,
+    q1: T,
+    median: T,
+    q3: T,
+    high: T
+    // todo all the other options...
+    ) extends Data[T, T] {
   def toServiceFormat = {
     Map("low" -> low, "q1" -> q1, "median" -> median, "q3" -> q3, "high" -> high) ++
-      Map("x" -> x).flatMap{HighchartKey.flatten}
+        Map("x" -> x).flatMap {
+          HighchartKey.flatten
+        }
   }
 }
 
@@ -530,40 +576,40 @@ case class BoxplotData[T](
 
 // No more than 22 members in a case class TODO
 case class Legend(
-                   align: Option[Alignment.Type] = None,
-                   backgroundColor: Option[Color.Type] = None,
-                   borderColor: Option[Color.Type] = None,
-                   //  borderRadius: Int = 5,
-                   //  borderWidth: Int = 2,
-                   enabled: Option[Boolean] = Some(false), // override default
-                   floating: Option[Boolean] = None,
-                   itemDistance: Option[Int] = None,
-                   //itemHiddenStyle
-                   //itemHoverStyle
-                   itemMarginBottom: Option[Int] = None,
-                   itemMarginTop: Option[Int] = None,
-                   //itemStyle
-                   itemWidth: Option[Int] = None,
-                   labelFormat: Option[String] = None, // TODO - format string helpers
-                   //labelFormatter
-                   layout: Option[Layout.Type] = None,
-                   margin: Option[Int] = None,
-                   maxHeight: Option[Int] = None,
-                   //navigation
-                   padding: Option[Int] = None,
-                   reversed: Option[Boolean] = None,
-                   rtl: Option[Boolean] = None, // right-to-left
-                   //shadow
-                   //style
-                   //  symbolPadding: Int = 5,
-                   //  symbolWidth: Int = 30,
-                   title: Option[String] = None, // todo - css title
-                   //  useHTML: Boolean = false,
-                   verticalAlign: Option[VerticalAlignment.Type] = None,
-                   width: Option[Int] = None,
-                   x: Option[Int] = None,
-                   y: Option[Int] = None
-                   ) extends HighchartKey("legend") {
+    align: Option[Alignment.Type] = None,
+    backgroundColor: Option[Color.Type] = None,
+    borderColor: Option[Color.Type] = None,
+    //  borderRadius: Int = 5,
+    //  borderWidth: Int = 2,
+    enabled: Option[Boolean] = Some(false), // override default
+    floating: Option[Boolean] = None,
+    itemDistance: Option[Int] = None,
+    //itemHiddenStyle
+    //itemHoverStyle
+    itemMarginBottom: Option[Int] = None,
+    itemMarginTop: Option[Int] = None,
+    //itemStyle
+    itemWidth: Option[Int] = None,
+    labelFormat: Option[String] = None, // TODO - format string helpers
+    //labelFormatter
+    layout: Option[Layout.Type] = None,
+    margin: Option[Int] = None,
+    maxHeight: Option[Int] = None,
+    //navigation
+    padding: Option[Int] = None,
+    reversed: Option[Boolean] = None,
+    rtl: Option[Boolean] = None, // right-to-left
+    //shadow
+    //style
+    //  symbolPadding: Int = 5,
+    //  symbolWidth: Int = 30,
+    title: Option[String] = None, // todo - css title
+    //  useHTML: Boolean = false,
+    verticalAlign: Option[VerticalAlignment.Type] = None,
+    width: Option[Int] = None,
+    x: Option[Int] = None,
+    y: Option[Int] = None
+    ) extends HighchartKey("legend") {
 
   def toServiceFormat =
     Map(
@@ -593,47 +639,47 @@ case class Legend(
       "maxHeight" -> maxHeight,
       "title" -> title,
       "width" -> width
-    ).flatMap{case(s, a) => HighchartKey.flatten(s, a)}
+    ).flatMap { case (s, a) => HighchartKey.flatten(s, a) }
 }
 
 case class Axis(
-                 title: Option[AxisTitle] = Some(AxisTitle()),
-                 allowDecimals: Option[Boolean] = None,
-                 alternateGridColor: Option[Color.Type] = None,
-                 categories: Option[Array[String]] = None,
-                 dateTimeLabelFormats: Option[DateTimeFormats] = None,
-                 endOnTick: Option[Boolean] = None,
-                 //events
-                 //  gridLineColor: Color.Type = "#C0C0C0",
-                 //  gridLineDashStyle: String = "Solid",       // TODO Bundle
-                 //  gridLineWidth: Int = 2,
-                 var id: Option[String] = None,
-                 labels: Option[AxisLabel] = None,
-                 lineColor: Option[Color.Type] = None,
-                 lineWidth: Option[Int] = None,
-                 //linkedTo
-                 max: Option[Int] = None,
-                 //  maxPadding: Double = 0.01,
-                 min: Option[Int] = None,
-                 //  minPadding: Double = 0.01,
-                 minRange: Option[Int] = None,
-                 minTickInterval: Option[Int] = None,
-                 //minor
-                 offset: Option[Int] = None,
-                 opposite: Option[Boolean] = None, // opposite side of chart, ie left / right for y-axis
-                 //plotBands
-                 //plotLines // TODO Kevin wants these
-                 reversed: Option[Boolean] = None,
-                 //  showEmpty: Boolean = false,
-                 showFirstLabel: Option[Boolean] = None,
-                 showLastLabel: Option[Boolean] = None,
-                 //startOfWeek
-                 startOnTick: Option[Boolean] = None,
-                 //  tickColor: Color.Type = "#C0D0E0",
-                 // TICK STUFF TODO
-                 axisType: Option[AxisType.Type] = None,
-                 var __name: String = "yAxis"
-                 ) extends HighchartKey(__name) {
+    title: Option[AxisTitle] = Some(AxisTitle()),
+    allowDecimals: Option[Boolean] = None,
+    alternateGridColor: Option[Color.Type] = None,
+    categories: Option[Array[String]] = None,
+    dateTimeLabelFormats: Option[DateTimeFormats] = None,
+    endOnTick: Option[Boolean] = None,
+    //events
+    //  gridLineColor: Color.Type = "#C0C0C0",
+    //  gridLineDashStyle: String = "Solid",       // TODO Bundle
+    //  gridLineWidth: Int = 2,
+    var id: Option[String] = None,
+    labels: Option[AxisLabel] = None,
+    lineColor: Option[Color.Type] = None,
+    lineWidth: Option[Int] = None,
+    //linkedTo
+    max: Option[Int] = None,
+    //  maxPadding: Double = 0.01,
+    min: Option[Int] = None,
+    //  minPadding: Double = 0.01,
+    minRange: Option[Int] = None,
+    minTickInterval: Option[Int] = None,
+    //minor
+    offset: Option[Int] = None,
+    opposite: Option[Boolean] = None, // opposite side of chart, ie left / right for y-axis
+    //plotBands
+    //plotLines // TODO Kevin wants these
+    reversed: Option[Boolean] = None,
+    //  showEmpty: Boolean = false,
+    showFirstLabel: Option[Boolean] = None,
+    showLastLabel: Option[Boolean] = None,
+    //startOfWeek
+    startOnTick: Option[Boolean] = None,
+    //  tickColor: Color.Type = "#C0D0E0",
+    // TICK STUFF TODO
+    axisType: Option[AxisType.Type] = None,
+    var __name: String = "yAxis"
+    ) extends HighchartKey(__name) {
 
   def toServiceFormat: Map[String, Any] =
     Map(
@@ -654,25 +700,25 @@ case class Axis(
       "title" -> title,
       "id" -> id
     ).flatMap(HighchartKey.flatten) ++
-      HighchartKey.optionToServiceFormat(dateTimeLabelFormats) ++
-      HighchartKey.optionToServiceFormat(labels)
+        HighchartKey.optionToServiceFormat(dateTimeLabelFormats) ++
+        HighchartKey.optionToServiceFormat(labels)
 }
 
 case class AxisLabel(
-                      align: Option[String] = None,
-                      enabled: Option[Boolean] = None,
-                      format: Option[String] = None,
-                      //                            formatter
-                      maxStaggerLines: Option[Int] = None,
-                      overflow: Option[Overflow.Type] = None,
-                      rotation: Option[Int] = None,
-                      step: Option[Int] = None,
-                      style: Option[CSSObject] = None,
-                      useHTML: Option[Boolean] = None,
-                      x: Option[Int] = None,
-                      y: Option[Int] = None,
-                      zIndex: Option[Int] = None
-                      ) extends HighchartKey("labels") {
+    align: Option[String] = None,
+    enabled: Option[Boolean] = None,
+    format: Option[String] = None,
+    //                            formatter
+    maxStaggerLines: Option[Int] = None,
+    overflow: Option[Overflow.Type] = None,
+    rotation: Option[Int] = None,
+    step: Option[Int] = None,
+    style: Option[CSSObject] = None,
+    useHTML: Option[Boolean] = None,
+    x: Option[Int] = None,
+    y: Option[Int] = None,
+    zIndex: Option[Int] = None
+    ) extends HighchartKey("labels") {
   def toServiceFormat =
     Map(
       "align" -> align,
@@ -687,47 +733,47 @@ case class AxisLabel(
       "y" -> y,
       "zIndex" -> zIndex
     ).flatMap(HighchartKey.flatten) ++
-      HighchartKey.someStyleToServiceFormat(style)
+        HighchartKey.someStyleToServiceFormat(style)
 }
 
 case class DateTimeFormats(
-                            millisecond: String = "%H:%M:%S.%L",
-                            second: String = "%H:%M:%S",
-                            minute: String = "%H:%M",
-                            hour: String = "%H:%M",
-                            day: String = "%e. %b",
-                            week: String = "%e. b",
-                            month: String = "%b \\ %y",
-                            year: String = "%Y"
-                            ) extends HighchartKey("dateTimeLabelFormats") {
+    millisecond: String = "%H:%M:%S.%L",
+    second: String = "%H:%M:%S",
+    minute: String = "%H:%M",
+    hour: String = "%H:%M",
+    day: String = "%e. %b",
+    week: String = "%e. b",
+    month: String = "%b \\ %y",
+    year: String = "%Y"
+    ) extends HighchartKey("dateTimeLabelFormats") {
 
   def toServiceFormat = Map("dateTimeLabelFormats" ->
-    Map(
-      "millisecond" -> millisecond,
-      "second" -> second,
-      "minute" -> minute,
-      "hour" -> hour,
-      "day" -> day,
-      "week" -> week,
-      "month" -> month,
-      "year" -> year
-    )
+      Map(
+        "millisecond" -> millisecond,
+        "second" -> second,
+        "minute" -> minute,
+        "hour" -> hour,
+        "day" -> day,
+        "week" -> week,
+        "month" -> month,
+        "year" -> year
+      )
   )
 }
 
 // Must supply text, others default to align=middle, maring=(x=0, y=10), offset=(relative), rotation=0
 case class AxisTitle(
-                      text: String = "", // Override default y-axis "value"
-                      align: Option[AxisAlignment.Type] = None,
-                      margin: Option[Int] = None,
-                      offset: Option[Int] = None,
-                      rotation: Option[Int] = None,
-                      style: Option[CSSObject] = None
-                      ) {
+    text: String = "", // Override default y-axis "value"
+    align: Option[AxisAlignment.Type] = None,
+    margin: Option[Int] = None,
+    offset: Option[Int] = None,
+    rotation: Option[Int] = None,
+    style: Option[CSSObject] = None
+    ) {
   def toServiceFormat =
     Map("text" -> text) ++
-      Map("align" -> align, "margin" -> margin, "offset" -> offset, "rotation" -> rotation).flatMap(HighchartKey.flatten) ++
-      HighchartKey.someStyleToServiceFormat(style)
+        Map("align" -> align, "margin" -> margin, "offset" -> offset, "rotation" -> rotation).flatMap(HighchartKey.flatten) ++
+        HighchartKey.someStyleToServiceFormat(style)
 }
 
 object AxisTitle {

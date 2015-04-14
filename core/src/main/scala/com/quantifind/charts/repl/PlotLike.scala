@@ -182,7 +182,7 @@ Chart augmenting functions:
  - xlabel: assigns a label to the x-axis of the most recent plot
  - ylabel: assign a label to the y-axis of the most recent plot
 */
-trait Hold[T] extends PlotLike[T] {
+trait Hold {
   var isHeld: Boolean = false
   def hold(): Unit = {
     isHeld = true

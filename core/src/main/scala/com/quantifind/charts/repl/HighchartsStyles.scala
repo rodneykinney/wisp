@@ -9,7 +9,7 @@ import com.quantifind.charts.highcharts._
 /**
  * Defines auxiliary tools available to plots, such as adding a Title
  */
-trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPlotHighcharts {
+trait HighchartsStyles extends Hold with Labels[Highchart] with WebPlotHighcharts {
   import Highchart._
 
   override def plot(t: Highchart): Highchart = {
