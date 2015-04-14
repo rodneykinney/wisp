@@ -9,13 +9,17 @@ package com.quantifind.charts.repl
 trait BinnedData {
   def toBinned(): Iterable[(String, Double)]
 
-  def coupledTripletBinned[A, B, C](data: Iterable[((A, B), C)])(implicit ev: Numeric[C]) = {
-    data.map{case((a, b), c) => s"$a - $b" -> ev.toDouble(c)}
+  def coupledTripletBinned[A, B, C: Numeric](data: Iterable[((A, B), C)])
+  = {
+    data.map{case((a, b), c) => s"$a - $b" -> implicitly[Numeric[C]].toDouble(c)}
   }
 }
 
-class PairBinned[A, B: Numeric](data: Iterable[(A, B)])(implicit ev: Numeric[B]) extends BinnedData {
-  def toBinned(): Iterable[(String, Double)] = data.map{case(a, b) => a.toString -> ev.toDouble(b)}
+class PairBinned[A, B: Numeric](data: Iterable[(A, B)]) extends
+BinnedData {
+  def toBinned(): Iterable[(String, Double)] = data.map{case(a, b) => a.toString ->
+    implicitly[Numeric[B]]
+    .toDouble(b)}
 }
 
 class TrueTripletBinned[A, B, C: Numeric](data: Iterable[(A, B, C)]) extends BinnedData {
@@ -46,9 +50,9 @@ class IterableBinned[A: Numeric](data: Iterable[A], numBins: Int = -1) extends B
   }
 
   def toBinned(): Iterable[(String, Double)] = {
-    def numericToDouble[X](x: X)(implicit ev: Numeric[X]): Double = ev.toDouble(x)
+    def numericToDouble[X: Numeric](x: X): Double = implicitly[Numeric[X]].toDouble(x)
 
-    val doubleData = data.map(numericToDouble(_)).toSeq.sorted
+    val doubleData = data.map(numericToDouble[A]).toSeq.sorted
 
     val (min, max) = (doubleData.min, doubleData.max)
 
@@ -85,13 +89,19 @@ trait BinnedDataLowerPriorityImplicits {
 }
 
 object BinnedData {
-  implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new IterableBinned[A](data, numBins)
+  implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new
+      IterableBinned[A](data, numBins)
   implicit def mkPair[A, B: Numeric](data: Iterable[(A, B)]) = new PairBinned(data)
-  implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) = new TrueTripletBinned(data)
-  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new CoupledTripletBinned(data)
+  implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) =
+    new TrueTripletBinned(data)
+  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new
+      CoupledTripletBinned(data)
 
-  implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData = new IterableBinned[A](data.toSeq, numBins)
+  implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData =
+    new IterableBinned[A](data.toSeq, numBins)
   implicit def mkPair[A, B: Numeric](data: Array[(A, B)]) = new PairBinned(data.toSeq)
-  implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) = new TrueTripletBinned(data.toSeq)
-  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) = new CoupledTripletBinned(data.toSeq)
+  implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) = new TrueTripletBinned(data
+    .toSeq)
+  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) = new
+      CoupledTripletBinned(data.toSeq)
 }

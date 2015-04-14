@@ -6,106 +6,135 @@ import scala.collection.immutable.ListMap
 import scala.language.implicitConversions
 
 /**
-* User: austin
-* Date: 12/2/14
-*
-* Highcharts implementation of plotting functionality. Includes several highcharts specific plots
-*
-* I rely on the fact that an implicit method defined in an object takes precedence over one
-* defined in a trait to have Iterable[T] with PartialFunction[Int, T] resolve to this method
-*/
+ * User: austin
+ * Date: 12/2/14
+ *
+ * Highcharts implementation of plotting functionality. Includes several highcharts specific plots
+ *
+ * I rely on the fact that an implicit method defined in an object takes precedence over one
+ * defined in a trait to have Iterable[T] with PartialFunction[Int, T] resolve to this method
+ */
 
 object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowerPriorityImplicits with HighchartsStyles {
 
-  implicit def mkStringIterableIterable[B: Numeric](ab: (Iterable[String], Iterable[B])) = new StringIterableIterable(ab._1, ab._2)
-  implicit def mkStringIterableIterable[B: Numeric](ab: (Iterable[(String, B)])) = new StringIterableIterable(ab.map(_._1), ab.map(_._2))
+  implicit class PairFromStringAndIterable[B](ab: (Iterable[String], Iterable[B])) extends
+  IterablePair[String, B] with HasCategories {
+      def toIterables: (Iterable[String], Iterable[B]) = (ab._1, ab._2)
+      def getCategories: Iterable[String] = ab._1
+    }
 
-  implicit def mkStringArrayArray[B: Numeric](ab: (Array[String], Array[B])) = new StringIterableIterable(ab._1.toSeq, ab._2.toSeq)
-  implicit def mkStringArrayArray[B: Numeric](ab: (Array[(String, B)])) = new StringIterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
+  implicit class PairFromIterableStringTuple[B](ab: (Iterable[(String, B)]))  extends
+  IterablePair[String, B] with HasCategories {
+    def toIterables: (Iterable[String], Iterable[B]) = (ab.map(_._1), ab.map(_._2))
+    def getCategories: Iterable[String] = ab.map(_._1)
+  }
 
-  implicit def mkIterableIterable[A: Numeric, B: Numeric](ab: (Iterable[A], Iterable[B])) = new IterableIterable(ab._1, ab._2)
-  implicit def mkIterableIterable[A: Numeric, B: Numeric](ab: (Iterable[(A, B)])) = new IterableIterable(ab.map(_._1), ab.map(_._2))
-  implicit def mkIterableIterable[B: Numeric](b: (Iterable[B])) = new IterableIterable((0 until b.size), b)
+//  implicit def mkStringArrayArray[B](ab: (Array[String], Array[B])) = new StringIterableIterable(ab._1.toSeq, ab._2.toSeq)
+//
+//  implicit def mkStringArrayArray[B](ab: (Array[(String, B)])) = new StringIterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
 
-  implicit def mkArrayArray[A: Numeric, B: Numeric](ab: (Array[A], Array[B])) = new IterableIterable(ab._1.toSeq, ab._2.toSeq)
-  implicit def mkArrayArray[A: Numeric, B: Numeric](ab: (Array[(A, B)])) = new IterableIterable(ab.map(_._1).toSeq, ab.map(_._2).toSeq)
-  implicit def mkArrayArray[B: Numeric](b: (Array[B])) = new IterableIterable((0 until b.size), b.toSeq)
+  implicit class PairFromPairOfIterables[A, B](ab: (Iterable[A], Iterable[B])) extends IterablePair[A, B] {
+    def toIterables: (Iterable[A], Iterable[B]) = (ab._1, ab._2)
+  }
 
-  implicit def mkArrayIterable[A: Numeric, B: Numeric](ab: (Array[A], Iterable[B])) = new IterableIterable(ab._1.toSeq, ab._2)
-  implicit def mkIterableArray[A: Numeric, B: Numeric](ab: (Iterable[A], Array[B])) = new IterableIterable(ab._1, ab._2.toSeq)
+  implicit class PairFromIterableTuple[A, B](ab: (Iterable[(A, B)])) extends IterablePair[A, B] {
+    def toIterables: (Iterable[A], Iterable[B]) = (ab.map(_._1), ab.map(_._2))
+  }
 
-  implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new IterableBinned[A](data, numBins)
+  implicit class PairFromIterable[B](b: (Iterable[B]))extends IterablePair[Int, B] {
+    def toIterables = ((0 until b.size), b)
+  }
+
+  implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new
+      IterableBinned[A](data, numBins)
+
   implicit def mkPair[A, B: Numeric](data: Iterable[(A, B)]) = new PairBinned(data)
-  implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) = new TrueTripletBinned(data)
-  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new CoupledTripletBinned(data)
 
-  implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData = new IterableBinned[A](data.toSeq, numBins)
+  implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) = new TrueTripletBinned(data)
+
+  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new
+      CoupledTripletBinned(data)
+
+  implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData =
+    new IterableBinned(data.toSeq, numBins)
+
   implicit def mkPair[A, B: Numeric](data: Array[(A, B)]) = new PairBinned(data.toSeq)
-  implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) = new TrueTripletBinned(data.toSeq)
-  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) = new CoupledTripletBinned(data.toSeq)
+
+  implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) =
+    new TrueTripletBinned(data.toSeq)
+
+  implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) =
+    new CoupledTripletBinned(data.toSeq)
 
   // for boxplot
   def invalidSizeBoxPlot() = {
     System.err.println("Warning: tried to create a boxplot from a list that wasn't size 5 - removing invalid elements")
   }
 
-  implicit def mkBoxedDataBoxes[T: Numeric](data: Iterable[(T, T, T, T, T)]): Iterable[BoxplotData[T]] = {
-    data.map{case(low, q1, median, q3, high) => Data(low, q1, median, q3, high)}
+  implicit def mkBoxedDataBoxes[T](data: Iterable[(T, T, T, T, T)]): Iterable[BoxplotData[T]] = {
+    data.map { case (low, q1, median, q3, high) => Data(low, q1, median, q3, high)}
   }
-  implicit def mkBoxedDataXBoxes[T: Numeric](data: Iterable[(Any, T, T, T, T, T)]): Iterable[BoxplotData[T]] = {
-    data.map{case(x, low, q1, median, q3, high) => Data(x, low, q1, median, q3, high)}
+
+  implicit def mkBoxedDataXBoxes[T](data: Iterable[(Any, T, T, T, T, T)]): Iterable[BoxplotData[T]] = {
+    data.map { case (x, low, q1, median, q3, high) => Data(x, low, q1, median, q3, high)}
   }
-  implicit def mkBoxedDataIterable[T: Numeric](data: Iterable[Iterable[T]]): Iterable[BoxplotData[T]] = {
-    if(data.exists(_.size != 5)) invalidSizeBoxPlot()
-    data.filter(_.size == 5).map(_.toList).map{itr => Data(itr(0), itr(1), itr(2), itr(3), itr(4))}
+
+  implicit def mkBoxedDataIterable[T](data: Iterable[Iterable[T]]): Iterable[BoxplotData[T]] = {
+    if (data.exists(_.size != 5)) invalidSizeBoxPlot()
+    data.filter(_.size == 5).map(_.toList).map { itr => Data(itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
-  implicit def mkBoxedDataArray[T: Numeric](data: Iterable[Array[T]]): Iterable[BoxplotData[T]] = {
-    if(data.exists(_.size != 5)) invalidSizeBoxPlot()
-    data.filter(_.size == 5).map{itr => Data(itr(0), itr(1), itr(2), itr(3), itr(4))}
+
+  implicit def mkBoxedDataArray[T](data: Iterable[Array[T]]): Iterable[BoxplotData[T]] = {
+    if (data.exists(_.size != 5)) invalidSizeBoxPlot()
+    data.filter(_.size == 5).map { itr => Data(itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
-  implicit def mkBoxedDataXIterable[T: Numeric](data: Iterable[(Any, Iterable[T])]): Iterable[BoxplotData[T]] = {
-    if(data.exists(_._2.size != 5)) invalidSizeBoxPlot()
-    data.filter(_._2.size == 5).map{case(x, itr) => x -> itr.toList}.map{case(x, itr) => Data(x, itr(0), itr(1), itr(2), itr(3), itr(4))}
+
+  implicit def mkBoxedDataXIterable[T](data: Iterable[(Any, Iterable[T])]): Iterable[BoxplotData[T]] = {
+    if (data.exists(_._2.size != 5)) invalidSizeBoxPlot()
+    data.filter(_._2.size == 5).map { case (x, itr) => x -> itr.toList}.map { case (x, itr) => Data(x, itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
-  implicit def mkBoxedDataXArray[T: Numeric](data: Iterable[(Any, Array[T])]): Iterable[BoxplotData[T]] = {
-    if(data.exists(_._2.size != 5)) invalidSizeBoxPlot()
-    data.filter(_._2.size == 5).map{case(x, itr) => Data(x, itr(0), itr(1), itr(2), itr(3), itr(4))}
+
+  implicit def mkBoxedDataXArray[T](data: Iterable[(Any, Array[T])]): Iterable[BoxplotData[T]] = {
+    if (data.exists(_._2.size != 5)) invalidSizeBoxPlot()
+    data.filter(_._2.size == 5).map { case (x, itr) => Data(x, itr(0), itr(1), itr(2), itr(3), itr(4))}
   }
 
   def stopServer = stopWispServer
+
   def startServer() = startWispServer()
+
   def setPort(port: Int) = setWispPort(port)
 
-  private def addStyle[A, B, C, D](hc: Highchart, xy: IterablePair[A, B, C, D]) = {
+  private def addStyle[C, D](hc: Highchart, xy: IterablePair[C, D]) = {
     xy match {
-      case s: StringIterableIterable[_] => xAxisCategories(hc, s.getCategories)
+      case s: HasCategories => xAxisCategories(hc, s.getCategories)
       case _ => hc
     }
   }
 
-  def area[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def area[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.area)
     plot(addStyle(hc, xy))
   }
 
-  def areaspline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def areaspline[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.areaspline)
     plot(addStyle(hc, xy))
   }
 
-  def bar[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def bar[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.bar)
     plot(addStyle(hc, xy))
   }
 
-  def boxplot[T: Numeric](data: Iterable[BoxplotData[T]]) = {
+  def boxplot[T](data: Iterable[BoxplotData[T]]) = {
     plot(Highchart(series = Seq(Series(data = data, chart = Some(SeriesType.boxplot)))))
   }
 
-  def column[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def column[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.column)
     plot(addStyle(hc, xy))
@@ -121,31 +150,32 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
     plot(Histogram.histogram(binCounts))
   }
 
-  def line[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def line[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.line)
     plot(addStyle(hc, xy))
   }
 
-  def pie[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def pie[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.pie)
     plot(addStyle(hc, xy))
   }
 
-  def regression[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
-    def numericToDouble[X](x: X)(implicit ev: Numeric[X]): Double = ev.toDouble(x)
+  def regression[C: Numeric, D: Numeric](xy: IterablePair[C, D]) = {
+    def numericToDouble[X: Numeric](x: X): Double = implicitly[Numeric[X]].toDouble(x)
     val (xr, yr) = xy.toIterables
-    LeastSquareRegression.leastSquareRegression(xr.toSeq.map(numericToDouble(_)), yr.toSeq.map(numericToDouble(_)))
+    LeastSquareRegression.leastSquareRegression(xr.toSeq.map(numericToDouble[C]),
+      yr.toSeq.map(numericToDouble[D]))
   }
 
-  def scatter[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def scatter[A, B, C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.scatter)
     plot(addStyle(hc, xy))
   }
 
-  def spline[A, B, C: Numeric, D: Numeric](xy: IterablePair[A, B, C, D]) = {
+  def spline[A, B, C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.spline)
     plot(addStyle(hc, xy))
@@ -165,7 +195,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
       "histogram" -> "Iterable of Numerics or Pairs",
       "boxplot" -> "Collections of five Numerics : low, q1, median, q3, high"
     )
-      .map{case(plot, description) =>"\t%-35s%s".format(plot, description)}
+      .map { case (plot, description) => "\t%-35s%s".format(plot, description)}
       .foreach(println)
     println("\nStylistic changes:\n")
     ListMap(
@@ -189,7 +219,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
       ) -> "updates the y-axis type",
       List("yAxisCategories(Iterable[String])") -> "create named labels for y-axis",
       List("legend(Iterable[String])") -> "adds a legend to the most recent plot",
-      List("""stack(["normal", "percent"])""") -> "stacks bars, columns, and lines relative to each other",
+      List( """stack(["normal", "percent"])""") -> "stacks bars, columns, and lines relative to each other",
       List("unstack") -> "remove stacking"
     ).foreach { case (methodLines, description) =>
       println("\t%-35s%s".format(methodLines(0), description))
@@ -203,7 +233,7 @@ object Highcharts extends IterablePairLowerPriorityImplicits with BinnedDataLowe
       "redo" -> "the opposite of undo",
       "delete" -> "wipes the most recent chart from the page",
       "deleteAll" -> "wipes all plots from the page"
-    ).foreach{case(method, description) => println("\t%-35s%s".format(method, description))}
+    ).foreach { case (method, description) => println("\t%-35s%s".format(method, description))}
   }
 }
 

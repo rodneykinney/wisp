@@ -24,7 +24,7 @@ trait HighchartsStyles extends Hold[Highchart] with Labels[Highchart] with WebPl
   }
 
   // Used in conjunction with IterablePair type-class for plotting
-  def xyToSeries[T1: Numeric, T2: Numeric](x: Iterable[T1], y: Iterable[T2], chartType: SeriesType.Type) =
+  def xyToSeries[T1, T2](x: Iterable[T1], y: Iterable[T2], chartType: SeriesType.Type) =
     Highchart(Series(x.zip(y).toSeq, chart = chartType))
 
   def updatePlot(f: (Highchart => Highchart)): Highchart = {

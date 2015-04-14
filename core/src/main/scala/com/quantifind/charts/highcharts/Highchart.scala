@@ -20,7 +20,7 @@ import scala.language.implicitConversions
  */
 object Highchart {
   // Data
-  implicit def traversableToTraversableData[X: Numeric, Y: Numeric](seq: Traversable[(X, Y)]) = seq.map{case(x, y) => Data(x, y)}
+  implicit def traversableToTraversableData[X, Y](seq: Traversable[(X, Y)]) = seq.map{case(x, y) => Data(x, y)}
 
   // Series
   implicit def traversableToTraversableSeries[X: Numeric, Y: Numeric](seq: Traversable[(X, Y)]) = seriesToTraversableSeries(traversableToSeries(seq))
@@ -463,7 +463,7 @@ trait Data[X, Y] {
 }
 
 object Data {
-  def apply[X: Numeric, Y: Numeric](
+  def apply[X, Y](
                                      x: X,
                                      y: Y,
                                      color: Option[Color.Type] = None,
@@ -473,7 +473,7 @@ object Data {
                                      name: Option[String] = None
                                      ): DataPair[X, Y] = DataPair(x, y, color, name)
 
-  def apply[T: Numeric](
+  def apply[T](
                          x: Any, // TODO x type
                          low: T,
                          q1: T,
@@ -483,7 +483,7 @@ object Data {
                          // todo all the other options...
                          ): BoxplotData[T] = BoxplotData(Some(x), low, q1, median, q3, high)
 
-  def apply[T: Numeric](
+  def apply[T](
                          low: T,
                          q1: T,
                          median: T,
@@ -494,7 +494,7 @@ object Data {
 }
 
 // Most series take in data points as (x, y)
-case class DataPair[X: Numeric, Y: Numeric](
+case class DataPair[X, Y](
                                              x: X,
                                              y: Y,
                                              color: Option[Color.Type] = None,
@@ -511,7 +511,7 @@ case class DataPair[X: Numeric, Y: Numeric](
 }
 
 // Box plot takes in data as an array of size five: lower-whisker, lower-box, median, upper-box, upper-whisker
-case class BoxplotData[T: Numeric](
+case class BoxplotData[T](
                                 x: Option[Any], // TODO x type
                                 low: T,
                                 q1: T,
