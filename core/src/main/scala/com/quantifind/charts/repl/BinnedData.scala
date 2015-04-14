@@ -11,19 +11,20 @@ trait BinnedData {
 
   def coupledTripletBinned[A, B, C: Numeric](data: Iterable[((A, B), C)])
   = {
-    data.map{case((a, b), c) => s"$a - $b" -> implicitly[Numeric[C]].toDouble(c)}
+    data.map { case ((a, b), c) => s"$a - $b" -> implicitly[Numeric[C]].toDouble(c)}
   }
 }
 
 class PairBinned[A, B: Numeric](data: Iterable[(A, B)]) extends
 BinnedData {
-  def toBinned(): Iterable[(String, Double)] = data.map{case(a, b) => a.toString ->
-    implicitly[Numeric[B]]
-    .toDouble(b)}
+  def toBinned(): Iterable[(String, Double)] =
+    data.map {
+      case (a, b) => a.toString -> implicitly[Numeric[B]].toDouble(b)
+    }
 }
 
 class TrueTripletBinned[A, B, C: Numeric](data: Iterable[(A, B, C)]) extends BinnedData {
-  def toBinned(): Iterable[(String, Double)] = coupledTripletBinned(data.map{case(a, b, c) => ((a, b), c)})
+  def toBinned(): Iterable[(String, Double)] = coupledTripletBinned(data.map { case (a, b, c) => ((a, b), c)})
 }
 
 class CoupledTripletBinned[A, B, C: Numeric](data: Iterable[((A, B), C)]) extends BinnedData {
@@ -41,7 +42,7 @@ class IterableBinned[A: Numeric](data: Iterable[A], numBins: Int = -1) extends B
 
   def format(start: Double, end: Double, digits: Int) = {
     digits match {
-      case x if x<=2 => f"$start%.2f - $end%.2f"
+      case x if x <= 2 => f"$start%.2f - $end%.2f"
       case 3 => f"$start%.3f - $end%.3f"
       case 4 => f"$start%.4f - $end%.4f"
       case 5 => f"$start%.5f - $end%.5f"
@@ -50,19 +51,17 @@ class IterableBinned[A: Numeric](data: Iterable[A], numBins: Int = -1) extends B
   }
 
   def toBinned(): Iterable[(String, Double)] = {
-    def numericToDouble[X: Numeric](x: X): Double = implicitly[Numeric[X]].toDouble(x)
-
-    val doubleData = data.map(numericToDouble[A]).toSeq.sorted
+    val doubleData = data.map(implicitly[Numeric[A]].toDouble).toSeq.sorted
 
     val (min, max) = (doubleData.min, doubleData.max)
 
-    def minDouble(x: Double, y: Double): Double = if(x<y) x else y
-    val margin = doubleData.dropRight(1).zip(doubleData.drop(1)).map{case(left, right) => right - left}.reduce(minDouble) / 2
+    def minDouble(x: Double, y: Double): Double = if (x < y) x else y
+    val margin = doubleData.dropRight(1).zip(doubleData.drop(1)).map { case (left, right) => right - left}.reduce(minDouble) / 2
 
-    val binWidth = ((max+margin) - (min-margin)) / numBins
+    val binWidth = ((max + margin) - (min - margin)) / numBins
     val zeros = leadingZeros(binWidth)
 
-    val binMap = (min to max by binWidth).zipWithIndex.map{case(bin, index) => index -> bin}.toMap
+    val binMap = (min to max by binWidth).zipWithIndex.map { case (bin, index) => index -> bin}.toMap
 
     // This strategy risks short-changing the last bin - perhaps there is a more fair way to do it?
     def toBin(d: Double) = {
@@ -70,12 +69,12 @@ class IterableBinned[A: Numeric](data: Iterable[A], numBins: Int = -1) extends B
       binMap(index)
     }
 
-    val binCounts = doubleData.map(toBin).groupBy(identity).map{case(bin, group) =>
+    val binCounts = doubleData.map(toBin).groupBy(identity).map { case (bin, group) =>
       bin -> group.size.toDouble
     }
 
-    binMap.toSeq.sortBy(_._1).map{case(index, bin) =>
-      format(bin, bin+binWidth, zeros) -> binCounts.getOrElse(bin, 0d)
+    binMap.toSeq.sortBy(_._1).map { case (index, bin) =>
+      format(bin, bin + binWidth, zeros) -> binCounts.getOrElse(bin, 0d)
     }
   }
 }
@@ -91,17 +90,23 @@ trait BinnedDataLowerPriorityImplicits {
 object BinnedData {
   implicit def binIterableNumBins[A: Numeric](data: Iterable[A], numBins: Int): BinnedData = new
       IterableBinned[A](data, numBins)
+
   implicit def mkPair[A, B: Numeric](data: Iterable[(A, B)]) = new PairBinned(data)
+
   implicit def mkTrueTriplet[A, B, C: Numeric](data: Iterable[(A, B, C)]) =
     new TrueTripletBinned(data)
+
   implicit def mkCoupledTriplet[A, B, C: Numeric](data: Iterable[((A, B), C)]) = new
       CoupledTripletBinned(data)
 
   implicit def binIterableNumBins[A: Numeric](data: Array[A], numBins: Int): BinnedData =
     new IterableBinned[A](data.toSeq, numBins)
+
   implicit def mkPair[A, B: Numeric](data: Array[(A, B)]) = new PairBinned(data.toSeq)
+
   implicit def mkTrueTriplet[A, B, C: Numeric](data: Array[(A, B, C)]) = new TrueTripletBinned(data
     .toSeq)
+
   implicit def mkCoupledTriplet[A, B, C: Numeric](data: Array[((A, B), C)]) = new
       CoupledTripletBinned(data.toSeq)
 }

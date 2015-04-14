@@ -15,15 +15,29 @@ import scala.language.implicitConversions
 
 object Highcharts extends BinnedDataLowerPriorityImplicits with HighchartsStyles {
 
-  implicit class PairFromStringAndIterable[B](ab: (Iterable[String], Iterable[B])) extends
-  IterablePair[String, B] with HasCategories {
+  implicit class PairFromStringAndIterable[B](ab: (Iterable[String], Iterable[B]))
+    extends IterablePair[String, B] with HasCategories {
     def toIterables: (Iterable[String], Iterable[B]) = (ab._1, ab._2)
 
     def getCategories: Iterable[String] = ab._1
   }
 
-  implicit class PairFromIterableStringTuple[B](ab: (Iterable[(String, B)])) extends
-  IterablePair[String, B] with HasCategories {
+  implicit class PairFromStringAndArray[B](ab: (Array[String], Array[B]))
+    extends IterablePair[String, B] with HasCategories {
+    def toIterables: (Iterable[String], Iterable[B]) = (ab._1, ab._2)
+
+    def getCategories: Iterable[String] = ab._1
+  }
+
+  implicit class PairFromIterableStringTuple[B](ab: (Iterable[(String, B)]))
+    extends IterablePair[String, B] with HasCategories {
+    def toIterables: (Iterable[String], Iterable[B]) = (ab.map(_._1), ab.map(_._2))
+
+    def getCategories: Iterable[String] = ab.map(_._1)
+  }
+
+  implicit class PairFromArrayStringTuple[B](ab: (Array[(String, B)]))
+    extends IterablePair[String, B] with HasCategories {
     def toIterables: (Iterable[String], Iterable[B]) = (ab.map(_._1), ab.map(_._2))
 
     def getCategories: Iterable[String] = ab.map(_._1)
@@ -197,19 +211,19 @@ object Highcharts extends BinnedDataLowerPriorityImplicits with HighchartsStyles
   }
 
   def regression[C: Numeric, D: Numeric](xy: IterablePair[C, D]) = {
-    def numericToDouble[X: Numeric](x: X): Double = implicitly[Numeric[X]].toDouble(x)
     val (xr, yr) = xy.toIterables
-    LeastSquareRegression.leastSquareRegression(xr.toSeq.map(numericToDouble[C]),
-      yr.toSeq.map(numericToDouble[D]))
+    LeastSquareRegression.leastSquareRegression(
+      xr.toSeq.map(implicitly[Numeric[C]].toDouble),
+      yr.toSeq.map(implicitly[Numeric[D]].toDouble))
   }
 
-  def scatter[A, B, C, D](xy: IterablePair[C, D]) = {
+  def scatter[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.scatter)
     plot(addStyle(hc, xy))
   }
 
-  def spline[A, B, C, D](xy: IterablePair[C, D]) = {
+  def spline[C, D](xy: IterablePair[C, D]) = {
     val (xr, yr) = xy.toIterables
     val hc = xyToSeries(xr, yr, SeriesType.spline)
     plot(addStyle(hc, xy))

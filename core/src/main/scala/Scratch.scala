@@ -1,12 +1,19 @@
-/**
- * Created by rodneykinney on 4/13/15.
- */
+import com.quantifind.charts.Highcharts._
+
 object Scratch {
 
-  import com.quantifind.charts.Highcharts._
+  val x = (0 to 100).map(_ * .01)
 
   def main(args: Array[String]): Unit = {
-    val x = (0 to 100).map(_ * .01)
+    val chart = line(x,x)
+    hold()
+    line(x, (t: Double) => math.sin(t*4*math.Pi))
+    chart.legend(List("linear2", "sin2"))
+    legend(List("linear", "sin"))
+
+  }
+
+  def testSyntax: Unit = {
     line(x)
     line(x, x)
     line(x, (t: Double) => t * t)
@@ -20,7 +27,7 @@ object Scratch {
     line(a, a)
     line(a, (t: Double) => t * t)
     line((t: Double) => t * t, a)
-//    histogram(a)
+    //    histogram(a)
     column(a.map(_.toString), a)
     pie(a.map(_.toString), a)
   }
