@@ -14,27 +14,28 @@ import scala.util.{Failure, Try, Random}
 /**
  * Created by rodneykinney on 4/14/15.
  */
-trait Plotter[T] {
-  def currentPlot: Option[T]
-  def addPlot(plot: T)
-  def updatePlot(plot: T)
+trait Plotter[T, TRef] {
+  def addPlot(plot: T): TRef
+  def updatePlot(id: TRef, newPlot: T): TRef
   def plots: Seq[T]
 }
 
-class WebPlotter extends Plotter[Highchart] {
+class WebPlotter extends Plotter[Highchart, Highchart] {
 
   var plots = Vector[Highchart]()
 
-  def currentPlot = plots.drop(plots.size - 1).headOption
-
-  def addPlot(plot: Highchart) {
+  def addPlot(plot: Highchart) = {
     plots = plots :+ plot
     refresh()
+    plot
   }
 
-  def updatePlot(plot: Highchart) {
-    plots = plots.take(plots.size - 1) :+ plot
+  def updatePlot(id: Highchart, newPlot: Highchart) = {
+    val idx = plots.indexOf(id)
+    require(idx >= 0, "Attempt to update non-existing plot")
+    plots = plots.updated(idx, newPlot)
     refresh()
+    newPlot
   }
 
   private var serverRootFileName = s"index-${System.currentTimeMillis()}.html"

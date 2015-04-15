@@ -152,6 +152,18 @@ case class Highchart(
 
   import Highchart._
 
+  def updateXAxis(copier: Axis => Axis) = copy(xAxis = newAxis(xAxis, copier))
+
+  def updateYAxis(copier: Axis => Axis) = copy(yAxis = newAxis(yAxis, copier))
+
+  private def newAxis(axis: Option[Array[Axis]], copier: Axis => Axis) = {
+    val copied: Array[Axis] = axis match {
+      case Some(axisArray) if axisArray.size > 0 => axisArray.map(copier)
+      case _ => Array(copier(Axis()))
+    }
+    Some(copied)
+  }
+
   // Axis Labels
   def xAxis(label: String): Highchart = {
     this.copy(xAxis = Some(xAxis match {
@@ -180,9 +192,9 @@ case class Highchart(
     }
     this.copy(xAxis = Some(xAxis match {
       case Some(axisArray) if axisArray.size > 0 => axisArray.map {
-        _.copy(axisType = axisType)
+        _.copy(axisType = axisType.toString)
       }
-      case _ => Array(Axis(axisType = axisType))
+      case _ => Array(Axis(axisType = axisType.toString))
     }))
   }
 
@@ -193,9 +205,9 @@ case class Highchart(
     }
     this.copy(yAxis = Some(yAxis match {
       case Some(axisArray) if axisArray.size > 0 => axisArray.map {
-        _.copy(axisType = axisType)
+        _.copy(axisType = axisType.toString)
       }
-      case _ => Array(Axis(axisType = axisType))
+      case _ => Array(Axis(axisType = axisType.toString))
     }))
   }
 
@@ -205,12 +217,12 @@ case class Highchart(
     this.copy(xAxis = Some(xAxis match {
       case Some(axisArray) if axisArray.size > 0 => axisArray.map {
         _.copy(
-          axisType = AxisType.category,
+          axisType = AxisType.category.toString,
           categories = Some(categories.toArray)
         )
       }
       case _ => Array(Axis(
-        axisType = AxisType.category,
+        axisType = AxisType.category.toString,
         categories = Some(categories.toArray)
       ))
     }))
@@ -221,12 +233,12 @@ case class Highchart(
     this.copy(yAxis = Some(yAxis match {
       case Some(axisArray) if axisArray.size > 0 => axisArray.map {
         _.copy(
-          axisType = AxisType.category,
+          axisType = AxisType.category.toString,
           categories = Some(categories.toArray)
         )
       }
       case _ => Array(Axis(
-        axisType = AxisType.category,
+        axisType = AxisType.category.toString,
         categories = Some(categories.toArray)
       ))
     }))
@@ -318,9 +330,11 @@ case class Highchart(
     // Axis defaults to yAxis, rename xAxes
     xAxis.map(_.foreach(_.__name = "xAxis"))
 
+    val axes = Seq(xAxis, yAxis).flatMap(optionArrayAxisToServiceFormat)
+
     finalPlotOption ++
         hckTraversableToServiceFormat(series) ++
-        Seq(xAxis, yAxis).flatMap(optionArrayAxisToServiceFormat) ++
+        axes ++
         optionArrayColorToServiceFormat(colorWrapper) ++
         Seq(chart, title, exporting, credits, legend, tooltip, subtitle).flatMap(optionToServiceFormat)
   }
@@ -679,7 +693,7 @@ case class Axis(
     startOnTick: Option[Boolean] = None,
     //  tickColor: Color.Type = "#C0D0E0",
     // TICK STUFF TODO
-    axisType: Option[AxisType] = None,
+    axisType: Option[String] = None,
     var __name: String = "yAxis"
     ) extends HighchartKey(__name) {
 

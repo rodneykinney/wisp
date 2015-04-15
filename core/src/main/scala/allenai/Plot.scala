@@ -1,8 +1,8 @@
 package allenai
 
 import com.quantifind.charts.WebPlotter
-import com.quantifind.charts.highcharts.{LinePlot, Highchart, SeriesType}
-import com.quantifind.charts.repl.{IterablePair, IterablePairConversions}
+import com.quantifind.charts.highcharts.{AxisType, LinePlot, Highchart, SeriesType}
+import com.quantifind.charts.repl._
 
 /**
  * Created by rodneykinney on 4/14/15.
@@ -10,21 +10,33 @@ import com.quantifind.charts.repl.{IterablePair, IterablePairConversions}
 object Plot extends WebPlotter with IterablePairConversions with ContainerConversions {
   implicit val plotter = this
 
-  def line[C, D](xy: IterablePair[C, D]) = {
-    xy.toIterables match {
-      case (x, y) if x.forall(_.isInstanceOf[String]) && y.forall(_.isInstanceOf[String]) =>
-        new LinePlot(Highchart((0 until x.size), (0 until y.size), SeriesType.line), plotter)
-            .xAxisCategories(x.asInstanceOf[Iterable[String]])
-            .yAxisCategories(y.asInstanceOf[Iterable[String]])
-      case (x, y) if x.forall(_.isInstanceOf[String]) =>
-        new LinePlot(Highchart((0 until x.size), y, SeriesType.line), plotter)
-            .xAxisCategories(x.asInstanceOf[Iterable[String]])
-      case (x, y) if y.forall(_.isInstanceOf[String]) =>
-        new LinePlot(Highchart(x, (0 until y.size), SeriesType.line), plotter)
-            .yAxisCategories(y.asInstanceOf[Iterable[String]])
-      case (x, y) =>
-        new LinePlot(Highchart(x, y, SeriesType.line), plotter)
-    }
+  def line(xy: XYData) =
+    new LinePlot(Highchart(xy.x, xy.y, SeriesType.line), plotter)
+
+  def lineCategoricalY(xy: LabeledXData) = {
+    val (x, labels) = (xy.x, xy.labels)
+    val hc = Highchart(x, (0 until x.size), SeriesType.line)
+        .updateYAxis(_.copy(axisType = AxisType.category.toString,
+      categories = Some(labels.toArray)))
+    new LinePlot(hc, plotter)
+  }
+
+  def lineCategoricalX(xy: LabeledYData) = {
+    val (y, labels) = (xy.y, xy.labels)
+    val hc = Highchart(y, (0 until y.size), SeriesType.line)
+        .updateXAxis(_.copy(axisType = AxisType.category.toString,
+      categories = Some(labels.toArray)))
+    new LinePlot(hc, plotter)
+  }
+
+  def lineCategoricalXY(xy: LabeledXYData) = {
+    val (x, y) = (xy.xLabels, xy.yLabels)
+    val hc = Highchart((0 until x.size), (0 until y.size), SeriesType.line)
+        .updateXAxis(_.copy(axisType = AxisType.category.toString,
+      categories = Some(x.asInstanceOf[Iterable[String]].toArray)))
+        .updateYAxis(_.copy(axisType = AxisType.category.toString,
+      categories = Some(y.asInstanceOf[Iterable[String]].toArray)))
+    new LinePlot(hc, plotter)
   }
 }
 
