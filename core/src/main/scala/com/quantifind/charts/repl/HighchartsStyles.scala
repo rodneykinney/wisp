@@ -42,31 +42,39 @@ trait HighchartsStyles extends Hold with Labels[Highchart] with WebPlotHighchart
   }
 
   // Assigns a label to the axis
+  @deprecated
   def xAxis(plot: Highchart, label: String): Highchart = {
     plot.xAxis(label)
   }
+  @deprecated
   def xAxis(label: String): Highchart = {
     updatePlot(xAxis _, label)
   }
+  @deprecated
   def yAxis(plot: Highchart, label: String): Highchart = {
     plot.yAxis(label)
   }
+  @deprecated
   def yAxis(label: String): Highchart = {
     updatePlot(yAxis _, label)
   }
 
   // Change the type of the x-axis, ie logarithmic
   // To convert to categories prefer xAxisCategories
-  def xAxisType(plot: Highchart, label: String): Highchart = {
+  @deprecated
+  def xAxisType(plot: Highchart, label: AxisType): Highchart = {
     plot.xAxisType(label)
   }
-  def xAxisType(label: String): Highchart = {
+  @deprecated
+  def xAxisType(label: AxisType): Highchart = {
     updatePlot(xAxisType _, label)
   }
-  def yAxisType(plot: Highchart, label: String): Highchart = {
+  @deprecated
+  def yAxisType(plot: Highchart, label: AxisType): Highchart = {
     plot.yAxisType(label)
   }
-  def yAxisType(label: String): Highchart = {
+  @deprecated
+  def yAxisType(label: AxisType): Highchart = {
     updatePlot(yAxisType _, label)
   }
 
@@ -115,7 +123,7 @@ trait HighchartsStyles extends Hold with Labels[Highchart] with WebPlotHighchart
   def stack(plot: Highchart, stackType: Stacking.Type): Highchart = {
     plot.stack(stackType)
   }
-  def stack(stackType: Stacking.Type = Stacking.normal): Highchart = {
+  def stack(stackType: Stacking.Type = Stacking.NORMAL): Highchart = {
     updatePlot(stack _, stackType)
   }
 

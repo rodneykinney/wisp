@@ -173,7 +173,7 @@ case class Highchart(
 
   // Change the type of the axis, ie logarithmic
   // To convert to categories prefer xAxisCategories
-  def xAxisType(axisType: AxisType.Type): Highchart = {
+  def xAxisType(axisType: AxisType): Highchart = {
     if (!AxisType.values.contains(axisType)) {
       println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
       return this
@@ -186,7 +186,7 @@ case class Highchart(
     }))
   }
 
-  def yAxisType(axisType: AxisType.Type): Highchart = {
+  def yAxisType(axisType: AxisType): Highchart = {
     if (!AxisType.values.contains(axisType)) {
       println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
       return this
@@ -200,6 +200,7 @@ case class Highchart(
   }
 
   // Modifies the axis to use String based category names instead of a numeric series
+  @deprecated
   def xAxisCategories(categories: Iterable[String]): Highchart = {
     this.copy(xAxis = Some(xAxis match {
       case Some(axisArray) if axisArray.size > 0 => axisArray.map {
@@ -215,6 +216,7 @@ case class Highchart(
     }))
   }
 
+  @deprecated
   def yAxisCategories(categories: Iterable[String]): Highchart = {
     this.copy(yAxis = Some(yAxis match {
       case Some(axisArray) if axisArray.size > 0 => axisArray.map {
@@ -658,9 +660,9 @@ case class Axis(
     lineColor: Option[Color.Type] = None,
     lineWidth: Option[Int] = None,
     //linkedTo
-    max: Option[Int] = None,
+    max: Option[Number] = None,
     //  maxPadding: Double = 0.01,
-    min: Option[Int] = None,
+    min: Option[Number] = None,
     //  minPadding: Double = 0.01,
     minRange: Option[Int] = None,
     minTickInterval: Option[Int] = None,
@@ -677,7 +679,7 @@ case class Axis(
     startOnTick: Option[Boolean] = None,
     //  tickColor: Color.Type = "#C0D0E0",
     // TICK STUFF TODO
-    axisType: Option[AxisType.Type] = None,
+    axisType: Option[AxisType] = None,
     var __name: String = "yAxis"
     ) extends HighchartKey(__name) {
 

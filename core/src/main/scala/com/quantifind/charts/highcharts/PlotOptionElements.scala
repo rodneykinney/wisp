@@ -6,6 +6,13 @@ package com.quantifind.charts.highcharts
  */
 object Stacking {
   type Type = String
-  val (normal, percent) = ("normal", "percent")
-  def values = Set(normal, percent)
+  val NORMAL = "normal"
+  val PERCENT = "percent"
+  def values = Set(NORMAL, PERCENT)
+  case object normal extends Stacking
+  case object percent extends Stacking
+}
+
+sealed trait Stacking {
+  override def toString = this.getClass.getSimpleName.stripSuffix("$")
 }

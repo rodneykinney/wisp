@@ -18,8 +18,8 @@ class HighchartsStyleTest extends FunSuite with Matchers {
 
   test("stacking") {
     val hc = Highchart(Seq(Series(Seq(Data(1, 2))), Series(Seq(Data(2, 3)))), xAxis = None, yAxis = None)
-    val stacked_hc = stack(hc, Stacking.normal)
-    stacked_hc.plotOptions.head.series.head.stacking should be(Some(Stacking.normal))
+    val stacked_hc = stack(hc, Stacking.NORMAL)
+    stacked_hc.plotOptions.head.series.head.stacking should be(Some(Stacking.NORMAL))
     val unstacked_hc = unstack(stacked_hc)
     unstacked_hc.plotOptions.head.series.head.stacking should be(None)
   }
