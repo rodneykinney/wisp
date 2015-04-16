@@ -1,4 +1,4 @@
-import allenai.{HighchartElementJsonFormat, HighchartElement, HighchartData, Plot}
+import allenai._
 import com.quantifind.charts.highcharts.{AxisType, Stacking}
 
 object Scratch {
@@ -7,14 +7,16 @@ object Scratch {
 
   def main(args: Array[String]): Unit = {
     import spray.json.DefaultJsonProtocol._
-    val d = HighchartData(1,"one")
+    import spray.json._
+    import allenai.AllFormats._
+    val d = HighchartAPI(series = List(Series(List(NumericalData(1,10), NumericalData(2,40), NumericalData(3,90)))))
     d.addOption("a","A")
     d.addOption("pair",(3,List("X","Y")))
     d.addOption("empty",List.empty[Int])
-    implicit val format = HighchartElementJsonFormat(HighchartData)
-    val d2 = HighchartData(2,"two")
+    val d2 = HighchartAPI()
     d.addOption("child",d2)
     val s = d.toJson.toString()
+    val ss = HighchartAPI(series = List(Series(List(NumericalData(1,10), NumericalData(2,40), NumericalData(3,90))))).toJson.toString()
     newAPI
     //        oldAPI
   }
@@ -34,9 +36,9 @@ object Scratch {
         .xAxisRange(.3, .7)
         .yAxisRange(-1, 1)
 
-    val lcAA = lineCategoricalXY(List("a", "b", "c"), List("One", "Two", "Three"))
-    val lcAN = lineCategoricalX(List("a", "b", "c"), List(1.0, 2.0, 3.0))
-    val lcNA = lineCategoricalY(List(1.0, 2.0, 3.0), List("One", "Two", "Three"))
+    val lcAA = line(List("a", "b", "c"), List("One", "Two", "Three"))
+    val lcAN = line(List("a", "b", "c"), List(1.0, 2.0, 3.0))
+    val lcNA = line(List(1.0, 2.0, 3.0), List("One", "Two", "Three"))
     //    val lc2 = line(x, x)
     //        .title("Categories")
     //        .xAxisCategories(x.map(t => s"$t.$t"))

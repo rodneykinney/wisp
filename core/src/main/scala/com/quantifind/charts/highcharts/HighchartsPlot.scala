@@ -16,7 +16,7 @@ trait BasePlot[T <: BasePlot[T]] {
 
   plotter.addPlot(data)
 
-  protected def update(newData: Highchart): T = {
+  def update(newData: Highchart): T = {
     data = plotter.updatePlot(data, newData)
     this.asInstanceOf[T]
   }

@@ -15,22 +15,24 @@ trait IterablePair[A, B] {
   def toIterables: (Iterable[A], Iterable[B])
 }
 
-trait XYData {
+sealed trait LinePlotData
+
+trait XYData extends LinePlotData {
   def x: Iterable[Double]
   def y: Iterable[Double]
 }
 
-trait LabeledXData {
+trait LabeledXData extends LinePlotData {
   def x: Iterable[Double]
   def labels: Iterable[String]
 }
 
-trait LabeledYData {
+trait LabeledYData extends LinePlotData {
   def y: Iterable[Double]
   def labels: Iterable[String]
 }
 
-trait LabeledXYData {
+trait LabeledXYData extends LinePlotData {
   def xLabels: Iterable[String]
   def yLabels: Iterable[String]
 }

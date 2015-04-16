@@ -11,7 +11,11 @@ import scala.util.control.NonFatal
  * Created by rodneykinney on 4/15/15.
  */
 object HighchartElementJsonFormat {
-  private[this] type JF[T] = JsonFormat[T] // simple alias for reduced verbosity
+  private[this] type JF[T] = JsonWriter[T] // simple alias for reduced verbosity
+
+  def asString[T] = new JsonWriter[T] {
+    def write(data: T) = JsString(data.toString)
+  }
 
   protected def extractFieldNames(classManifest: ClassManifest[_]): Array[String] = {
     val clazz = classManifest.erasure
@@ -42,701 +46,636 @@ object HighchartElementJsonFormat {
     val value = p.productElement(ix).asInstanceOf[T]
     writer match {
       case _: OptionFormat[_] if (value == None) => rest
+      case _ if value == null => rest
       case _ => (fieldName, writer.write(value)) :: rest
     }
   }
-
   // Case classes with 1 parameters
 
-  def apply[P1: JF, T <: HighchartElement : ClassManifest](construct: (P1) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, T <: HighchartElement : ClassManifest](construct: (P1) => T): JsonWriter[T] = {
     val Array(p1) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1)
-  }
+    new JsonWriter[T] {
+      def write(p: T) = {
+        val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+        fields.sizeHint(1 * 2)
+        fields ++= productElement2Field[P1](p1, p, 0)
+        fields ++= p.options
+        JsObject(fields: _*)
+      }
 
-  def jsonFormat[P1 :JF, T <: HighchartElement](construct: (P1) => T, fieldName1: String): RootJsonFormat[T] = new RootJsonFormat[T]{
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(1 * 2)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= p.options
-      JsObject(fields: _*)
     }
-    def read(value: JsValue) = ???
   }
 
   // Case classes with 2 parameters
 
-  def apply[P1: JF, P2: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2) => T): JsonWriter[T] = {
     val Array(p1, p2) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2)
-  }
+    new JsonWriter[T] {
+      def write(p: T) = {
+        val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+        fields.sizeHint(2 * 3)
+        fields ++= productElement2Field[P1](p1, p, 0)
+        fields ++= productElement2Field[P2](p2, p, 1)
+        fields ++= p.options
+        JsObject(fields: _*)
+      }
 
-  def jsonFormat[P1: JF, P2: JF, T <: HighchartElement](construct: (P1, P2) => T, fieldName1: String, fieldName2: String): RootJsonFormat[T] = new RootJsonFormat[T] {
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(2 * 3)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= p.options
-      JsObject(fields: _*)
     }
-
-    def read(value: JsValue) = ???
   }
 
 
   // Case classes with 3 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3) => T): JsonWriter[T] = {
     val Array(p1, p2, p3) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, T <: HighchartElement](construct: (P1, P2, P3) => T, fieldName1: String, fieldName2: String, fieldName3: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(3 * 4)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 4 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, P4: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, P4: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, T <: HighchartElement](construct: (P1, P2, P3, P4) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(4 * 5)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 5 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(5 * 6)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 6 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(6 * 7)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 7 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(7 * 8)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 8 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(8 * 9)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 9 parameters
 
-  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9) => T): RootJsonFormat[T] = {
+  def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(9 * 10)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 10 parameters
 
-  def apply0[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) => T): RootJsonFormat[T] = {
+  def apply0[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(10 * 11)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 11 parameters
 
-  def apply1[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) => T): RootJsonFormat[T] = {
+  def apply1[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(11 * 12)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 12 parameters
 
-  def apply2[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) => T): RootJsonFormat[T] = {
+  def apply2[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(12 * 13)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
+      fields ++= productElement2Field[P12](p12, p, 11)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 13 parameters
 
-  def apply3[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) => T): RootJsonFormat[T] = {
+  def apply3[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(13 * 14)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
+      fields ++= productElement2Field[P12](p12, p, 11)
+      fields ++= productElement2Field[P13](p13, p, 12)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 14 parameters
 
-  def apply4[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) => T): RootJsonFormat[T] = {
+  def apply4[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(14 * 15)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
+      fields ++= productElement2Field[P12](p12, p, 11)
+      fields ++= productElement2Field[P13](p13, p, 12)
+      fields ++= productElement2Field[P14](p14, p, 13)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 15 parameters
 
-  def apply5[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) => T): RootJsonFormat[T] = {
+  def apply5[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(15 * 16)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
+      fields ++= productElement2Field[P12](p12, p, 11)
+      fields ++= productElement2Field[P13](p13, p, 12)
+      fields ++= productElement2Field[P14](p14, p, 13)
+      fields ++= productElement2Field[P15](p15, p, 14)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 16 parameters
 
-  def apply6[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) => T): RootJsonFormat[T] = {
+  def apply6[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(16 * 17)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
+      fields ++= productElement2Field[P12](p12, p, 11)
+      fields ++= productElement2Field[P13](p13, p, 12)
+      fields ++= productElement2Field[P14](p14, p, 13)
+      fields ++= productElement2Field[P15](p15, p, 14)
+      fields ++= productElement2Field[P16](p16, p, 15)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 17 parameters
 
-  def apply7[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17) => T): RootJsonFormat[T] = {
+  def apply7[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String, fieldName17: String): RootJsonFormat[T] = new RootJsonFormat[T] {
+new JsonWriter[T] {
     def write(p: T) = {
       val fields = new collection.mutable.ListBuffer[(String, JsValue)]
       fields.sizeHint(17 * 18)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
-      fields ++= productElement2Field[P17](fieldName17, p, 16)
+      fields ++= productElement2Field[P1](p1, p, 0)
+      fields ++= productElement2Field[P2](p2, p, 1)
+      fields ++= productElement2Field[P3](p3, p, 2)
+      fields ++= productElement2Field[P4](p4, p, 3)
+      fields ++= productElement2Field[P5](p5, p, 4)
+      fields ++= productElement2Field[P6](p6, p, 5)
+      fields ++= productElement2Field[P7](p7, p, 6)
+      fields ++= productElement2Field[P8](p8, p, 7)
+      fields ++= productElement2Field[P9](p9, p, 8)
+      fields ++= productElement2Field[P10](p10, p, 9)
+      fields ++= productElement2Field[P11](p11, p, 10)
+      fields ++= productElement2Field[P12](p12, p, 11)
+      fields ++= productElement2Field[P13](p13, p, 12)
+      fields ++= productElement2Field[P14](p14, p, 13)
+      fields ++= productElement2Field[P15](p15, p, 14)
+      fields ++= productElement2Field[P16](p16, p, 15)
+      fields ++= productElement2Field[P17](p17, p, 16)
       fields ++= p.options
       JsObject(fields: _*)
     }
 
-    def read(value: JsValue) = ???
   }
+}
 
 
   // Case classes with 18 parameters
 
-  def apply8[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18) => T): RootJsonFormat[T] = {
+  def apply8[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18) => T): JsonWriter[T] = {
     val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18)
-  }
+    new JsonWriter[T] {
+      def write(p: T) = {
+        val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+        fields.sizeHint(18 * 19)
+        fields ++= productElement2Field[P1](p1, p, 0)
+        fields ++= productElement2Field[P2](p2, p, 1)
+        fields ++= productElement2Field[P3](p3, p, 2)
+        fields ++= productElement2Field[P4](p4, p, 3)
+        fields ++= productElement2Field[P5](p5, p, 4)
+        fields ++= productElement2Field[P6](p6, p, 5)
+        fields ++= productElement2Field[P7](p7, p, 6)
+        fields ++= productElement2Field[P8](p8, p, 7)
+        fields ++= productElement2Field[P9](p9, p, 8)
+        fields ++= productElement2Field[P10](p10, p, 9)
+        fields ++= productElement2Field[P11](p11, p, 10)
+        fields ++= productElement2Field[P12](p12, p, 11)
+        fields ++= productElement2Field[P13](p13, p, 12)
+        fields ++= productElement2Field[P14](p14, p, 13)
+        fields ++= productElement2Field[P15](p15, p, 14)
+        fields ++= productElement2Field[P16](p16, p, 15)
+        fields ++= productElement2Field[P17](p17, p, 16)
+        fields ++= productElement2Field[P18](p18, p, 17)
+        fields ++= p.options
+        JsObject(fields: _*)
+      }
 
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String, fieldName17: String, fieldName18: String): RootJsonFormat[T] = new RootJsonFormat[T] {
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(18 * 19)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
-      fields ++= productElement2Field[P17](fieldName17, p, 16)
-      fields ++= productElement2Field[P18](fieldName18, p, 17)
-      fields ++= p.options
-      JsObject(fields: _*)
     }
-
-    def read(value: JsValue) = ???
-  }
-
-
-  // Case classes with 19 parameters
-
-  def apply9[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19) => T): RootJsonFormat[T] = {
-    val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String, fieldName17: String, fieldName18: String, fieldName19: String): RootJsonFormat[T] = new RootJsonFormat[T] {
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(19 * 20)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
-      fields ++= productElement2Field[P17](fieldName17, p, 16)
-      fields ++= productElement2Field[P18](fieldName18, p, 17)
-      fields ++= productElement2Field[P19](fieldName19, p, 18)
-      fields ++= p.options
-      JsObject(fields: _*)
-    }
-
-    def read(value: JsValue) = ???
-  }
-
-
-  // Case classes with 20 parameters
-
-  def apply0[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20) => T): RootJsonFormat[T] = {
-    val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String, fieldName17: String, fieldName18: String, fieldName19: String, fieldName20: String): RootJsonFormat[T] = new RootJsonFormat[T] {
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(20 * 21)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
-      fields ++= productElement2Field[P17](fieldName17, p, 16)
-      fields ++= productElement2Field[P18](fieldName18, p, 17)
-      fields ++= productElement2Field[P19](fieldName19, p, 18)
-      fields ++= productElement2Field[P20](fieldName20, p, 19)
-      fields ++= p.options
-      JsObject(fields: _*)
-    }
-
-    def read(value: JsValue) = ???
-  }
-
-
-  // Case classes with 21 parameters
-
-  def apply1[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, P21: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21) => T): RootJsonFormat[T] = {
-    val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, P21: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String, fieldName17: String, fieldName18: String, fieldName19: String, fieldName20: String, fieldName21: String): RootJsonFormat[T] = new RootJsonFormat[T] {
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(21 * 22)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
-      fields ++= productElement2Field[P17](fieldName17, p, 16)
-      fields ++= productElement2Field[P18](fieldName18, p, 17)
-      fields ++= productElement2Field[P19](fieldName19, p, 18)
-      fields ++= productElement2Field[P20](fieldName20, p, 19)
-      fields ++= productElement2Field[P21](fieldName21, p, 20)
-      fields ++= p.options
-      JsObject(fields: _*)
-    }
-
-    def read(value: JsValue) = ???
-  }
-
-
-  // Case classes with 22 parameters
-
-  def apply2[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, P21: JF, P22: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22) => T): RootJsonFormat[T] = {
-    val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22) = extractFieldNames(classManifest[T])
-    jsonFormat(construct, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22)
-  }
-
-  def jsonFormat[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, P21: JF, P22: JF, T <: HighchartElement](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22) => T, fieldName1: String, fieldName2: String, fieldName3: String, fieldName4: String, fieldName5: String, fieldName6: String, fieldName7: String, fieldName8: String, fieldName9: String, fieldName10: String, fieldName11: String, fieldName12: String, fieldName13: String, fieldName14: String, fieldName15: String, fieldName16: String, fieldName17: String, fieldName18: String, fieldName19: String, fieldName20: String, fieldName21: String, fieldName22: String): RootJsonFormat[T] = new RootJsonFormat[T] {
-    def write(p: T) = {
-      val fields = new collection.mutable.ListBuffer[(String, JsValue)]
-      fields.sizeHint(22 * 23)
-      fields ++= productElement2Field[P1](fieldName1, p, 0)
-      fields ++= productElement2Field[P2](fieldName2, p, 1)
-      fields ++= productElement2Field[P3](fieldName3, p, 2)
-      fields ++= productElement2Field[P4](fieldName4, p, 3)
-      fields ++= productElement2Field[P5](fieldName5, p, 4)
-      fields ++= productElement2Field[P6](fieldName6, p, 5)
-      fields ++= productElement2Field[P7](fieldName7, p, 6)
-      fields ++= productElement2Field[P8](fieldName8, p, 7)
-      fields ++= productElement2Field[P9](fieldName9, p, 8)
-      fields ++= productElement2Field[P10](fieldName10, p, 9)
-      fields ++= productElement2Field[P11](fieldName11, p, 10)
-      fields ++= productElement2Field[P12](fieldName12, p, 11)
-      fields ++= productElement2Field[P13](fieldName13, p, 12)
-      fields ++= productElement2Field[P14](fieldName14, p, 13)
-      fields ++= productElement2Field[P15](fieldName15, p, 14)
-      fields ++= productElement2Field[P16](fieldName16, p, 15)
-      fields ++= productElement2Field[P17](fieldName17, p, 16)
-      fields ++= productElement2Field[P18](fieldName18, p, 17)
-      fields ++= productElement2Field[P19](fieldName19, p, 18)
-      fields ++= productElement2Field[P20](fieldName20, p, 19)
-      fields ++= productElement2Field[P21](fieldName21, p, 20)
-      fields ++= productElement2Field[P22](fieldName22, p, 21)
-      fields ++= p.options
-      JsObject(fields: _*)
-    }
-
-    def read(value: JsValue) = ???
-  }
-
-  object ProductFormats {
-    private val operators = Map(
-      "$eq" -> "=",
-      "$greater" -> ">",
-      "$less" -> "<",
-      "$plus" -> "+",
-      "$minus" -> "-",
-      "$times" -> "*",
-      "$div" -> "/",
-      "$bang" -> "!",
-      "$at" -> "@",
-      "$hash" -> "#",
-      "$percent" -> "%",
-      "$up" -> "^",
-      "$amp" -> "&",
-      "$tilde" -> "~",
-      "$qmark" -> "?",
-      "$bar" -> "|")
-
-    def unmangle(name: String) = operators.foldLeft(name) { case (n, (mangled, unmangled)) =>
-      if (n.indexOf(mangled) >= 0) n.replace(mangled, unmangled) else n
-    }
-  }
-
-
 }
+
+
+    // Case classes with 19 parameters
+
+    def apply9[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19) => T): JsonWriter[T] = {
+      val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19) = extractFieldNames(classManifest[T])
+      new JsonWriter[T] {
+        def write(p: T) = {
+          val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+          fields.sizeHint(19 * 20)
+          fields ++= productElement2Field[P1](p1, p, 0)
+          fields ++= productElement2Field[P2](p2, p, 1)
+          fields ++= productElement2Field[P3](p3, p, 2)
+          fields ++= productElement2Field[P4](p4, p, 3)
+          fields ++= productElement2Field[P5](p5, p, 4)
+          fields ++= productElement2Field[P6](p6, p, 5)
+          fields ++= productElement2Field[P7](p7, p, 6)
+          fields ++= productElement2Field[P8](p8, p, 7)
+          fields ++= productElement2Field[P9](p9, p, 8)
+          fields ++= productElement2Field[P10](p10, p, 9)
+          fields ++= productElement2Field[P11](p11, p, 10)
+          fields ++= productElement2Field[P12](p12, p, 11)
+          fields ++= productElement2Field[P13](p13, p, 12)
+          fields ++= productElement2Field[P14](p14, p, 13)
+          fields ++= productElement2Field[P15](p15, p, 14)
+          fields ++= productElement2Field[P16](p16, p, 15)
+          fields ++= productElement2Field[P17](p17, p, 16)
+          fields ++= productElement2Field[P18](p18, p, 17)
+          fields ++= productElement2Field[P19](p19, p, 18)
+          fields ++= p.options
+          JsObject(fields: _*)
+        }
+
+      }
+}
+
+
+      // Case classes with 20 parameters
+
+      def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20) => T): JsonWriter[T] = {
+        val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20) = extractFieldNames(classManifest[T])
+        new JsonWriter[T] {
+          def write(p: T) = {
+            val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+            fields.sizeHint(20 * 21)
+            fields ++= productElement2Field[P1](p1, p, 0)
+            fields ++= productElement2Field[P2](p2, p, 1)
+            fields ++= productElement2Field[P3](p3, p, 2)
+            fields ++= productElement2Field[P4](p4, p, 3)
+            fields ++= productElement2Field[P5](p5, p, 4)
+            fields ++= productElement2Field[P6](p6, p, 5)
+            fields ++= productElement2Field[P7](p7, p, 6)
+            fields ++= productElement2Field[P8](p8, p, 7)
+            fields ++= productElement2Field[P9](p9, p, 8)
+            fields ++= productElement2Field[P10](p10, p, 9)
+            fields ++= productElement2Field[P11](p11, p, 10)
+            fields ++= productElement2Field[P12](p12, p, 11)
+            fields ++= productElement2Field[P13](p13, p, 12)
+            fields ++= productElement2Field[P14](p14, p, 13)
+            fields ++= productElement2Field[P15](p15, p, 14)
+            fields ++= productElement2Field[P16](p16, p, 15)
+            fields ++= productElement2Field[P17](p17, p, 16)
+            fields ++= productElement2Field[P18](p18, p, 17)
+            fields ++= productElement2Field[P19](p19, p, 18)
+            fields ++= productElement2Field[P20](p20, p, 19)
+            fields ++= p.options
+            JsObject(fields: _*)
+          }
+
+        }
+}
+
+
+        // Case classes with 21 parameters
+
+        def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, P21: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21) => T): JsonWriter[T] = {
+          val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21) = extractFieldNames(classManifest[T])
+          new JsonWriter[T] {
+            def write(p: T) = {
+              val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+              fields.sizeHint(21 * 22)
+              fields ++= productElement2Field[P1](p1, p, 0)
+              fields ++= productElement2Field[P2](p2, p, 1)
+              fields ++= productElement2Field[P3](p3, p, 2)
+              fields ++= productElement2Field[P4](p4, p, 3)
+              fields ++= productElement2Field[P5](p5, p, 4)
+              fields ++= productElement2Field[P6](p6, p, 5)
+              fields ++= productElement2Field[P7](p7, p, 6)
+              fields ++= productElement2Field[P8](p8, p, 7)
+              fields ++= productElement2Field[P9](p9, p, 8)
+              fields ++= productElement2Field[P10](p10, p, 9)
+              fields ++= productElement2Field[P11](p11, p, 10)
+              fields ++= productElement2Field[P12](p12, p, 11)
+              fields ++= productElement2Field[P13](p13, p, 12)
+              fields ++= productElement2Field[P14](p14, p, 13)
+              fields ++= productElement2Field[P15](p15, p, 14)
+              fields ++= productElement2Field[P16](p16, p, 15)
+              fields ++= productElement2Field[P17](p17, p, 16)
+              fields ++= productElement2Field[P18](p18, p, 17)
+              fields ++= productElement2Field[P19](p19, p, 18)
+              fields ++= productElement2Field[P20](p20, p, 19)
+              fields ++= productElement2Field[P21](p21, p, 20)
+              fields ++= p.options
+              JsObject(fields: _*)
+            }
+
+          }
+}
+
+
+          // Case classes with 22 parameters
+
+          def apply[P1: JF, P2: JF, P3: JF, P4: JF, P5: JF, P6: JF, P7: JF, P8: JF, P9: JF, P10: JF, P11: JF, P12: JF, P13: JF, P14: JF, P15: JF, P16: JF, P17: JF, P18: JF, P19: JF, P20: JF, P21: JF, P22: JF, T <: HighchartElement : ClassManifest](construct: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22) => T): JsonWriter[T] = {
+            val Array(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22) = extractFieldNames(classManifest[T])
+            new JsonWriter[T] {
+              def write(p: T) = {
+                val fields = new collection.mutable.ListBuffer[(String, JsValue)]
+                fields.sizeHint(22 * 23)
+                fields ++= productElement2Field[P1](p1, p, 0)
+                fields ++= productElement2Field[P2](p2, p, 1)
+                fields ++= productElement2Field[P3](p3, p, 2)
+                fields ++= productElement2Field[P4](p4, p, 3)
+                fields ++= productElement2Field[P5](p5, p, 4)
+                fields ++= productElement2Field[P6](p6, p, 5)
+                fields ++= productElement2Field[P7](p7, p, 6)
+                fields ++= productElement2Field[P8](p8, p, 7)
+                fields ++= productElement2Field[P9](p9, p, 8)
+                fields ++= productElement2Field[P10](p10, p, 9)
+                fields ++= productElement2Field[P11](p11, p, 10)
+                fields ++= productElement2Field[P12](p12, p, 11)
+                fields ++= productElement2Field[P13](p13, p, 12)
+                fields ++= productElement2Field[P14](p14, p, 13)
+                fields ++= productElement2Field[P15](p15, p, 14)
+                fields ++= productElement2Field[P16](p16, p, 15)
+                fields ++= productElement2Field[P17](p17, p, 16)
+                fields ++= productElement2Field[P18](p18, p, 17)
+                fields ++= productElement2Field[P19](p19, p, 18)
+                fields ++= productElement2Field[P20](p20, p, 19)
+                fields ++= productElement2Field[P21](p21, p, 20)
+                fields ++= productElement2Field[P22](p22, p, 21)
+                fields ++= p.options
+                JsObject(fields: _*)
+              }
+
+            }
+}
+
+            object ProductFormats {
+              private val operators = Map(
+                "$eq" -> "=",
+                "$greater" -> ">",
+                "$less" -> "<",
+                "$plus" -> "+",
+                "$minus" -> "-",
+                "$times" -> "*",
+                "$div" -> "/",
+                "$bang" -> "!",
+                "$at" -> "@",
+                "$hash" -> "#",
+                "$percent" -> "%",
+                "$up" -> "^",
+                "$amp" -> "&",
+                "$tilde" -> "~",
+                "$qmark" -> "?",
+                "$bar" -> "|")
+
+              def unmangle(name: String) = operators.foldLeft(name) { case (n, (mangled, unmangled)) =>
+                if (n.indexOf(mangled) >= 0) n.replace(mangled, unmangled) else n
+              }
+            }
+
+
+          }
