@@ -60,7 +60,7 @@ object HighchartElementJsonFormat {
         val fields = new collection.mutable.ListBuffer[(String, JsValue)]
         fields.sizeHint(1 * 2)
         fields ++= productElement2Field[P1](p1, p, 0)
-        fields ++= p.options
+        fields ++= p.other
         JsObject(fields: _*)
       }
 
@@ -77,7 +77,7 @@ object HighchartElementJsonFormat {
         fields.sizeHint(2 * 3)
         fields ++= productElement2Field[P1](p1, p, 0)
         fields ++= productElement2Field[P2](p2, p, 1)
-        fields ++= p.options
+        fields ++= p.other
         JsObject(fields: _*)
       }
 
@@ -96,7 +96,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P1](p1, p, 0)
       fields ++= productElement2Field[P2](p2, p, 1)
       fields ++= productElement2Field[P3](p3, p, 2)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -116,7 +116,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P2](p2, p, 1)
       fields ++= productElement2Field[P3](p3, p, 2)
       fields ++= productElement2Field[P4](p4, p, 3)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -137,7 +137,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P3](p3, p, 2)
       fields ++= productElement2Field[P4](p4, p, 3)
       fields ++= productElement2Field[P5](p5, p, 4)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -159,7 +159,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P4](p4, p, 3)
       fields ++= productElement2Field[P5](p5, p, 4)
       fields ++= productElement2Field[P6](p6, p, 5)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -182,7 +182,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P5](p5, p, 4)
       fields ++= productElement2Field[P6](p6, p, 5)
       fields ++= productElement2Field[P7](p7, p, 6)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -206,7 +206,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P6](p6, p, 5)
       fields ++= productElement2Field[P7](p7, p, 6)
       fields ++= productElement2Field[P8](p8, p, 7)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -231,7 +231,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P7](p7, p, 6)
       fields ++= productElement2Field[P8](p8, p, 7)
       fields ++= productElement2Field[P9](p9, p, 8)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -257,7 +257,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P8](p8, p, 7)
       fields ++= productElement2Field[P9](p9, p, 8)
       fields ++= productElement2Field[P10](p10, p, 9)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -284,7 +284,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P9](p9, p, 8)
       fields ++= productElement2Field[P10](p10, p, 9)
       fields ++= productElement2Field[P11](p11, p, 10)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -312,7 +312,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P10](p10, p, 9)
       fields ++= productElement2Field[P11](p11, p, 10)
       fields ++= productElement2Field[P12](p12, p, 11)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -341,7 +341,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P11](p11, p, 10)
       fields ++= productElement2Field[P12](p12, p, 11)
       fields ++= productElement2Field[P13](p13, p, 12)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -371,7 +371,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P12](p12, p, 11)
       fields ++= productElement2Field[P13](p13, p, 12)
       fields ++= productElement2Field[P14](p14, p, 13)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -402,7 +402,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P13](p13, p, 12)
       fields ++= productElement2Field[P14](p14, p, 13)
       fields ++= productElement2Field[P15](p15, p, 14)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -434,7 +434,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P14](p14, p, 13)
       fields ++= productElement2Field[P15](p15, p, 14)
       fields ++= productElement2Field[P16](p16, p, 15)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -467,7 +467,7 @@ new JsonWriter[T] {
       fields ++= productElement2Field[P15](p15, p, 14)
       fields ++= productElement2Field[P16](p16, p, 15)
       fields ++= productElement2Field[P17](p17, p, 16)
-      fields ++= p.options
+      fields ++= p.other
       JsObject(fields: _*)
     }
 
@@ -501,7 +501,7 @@ new JsonWriter[T] {
         fields ++= productElement2Field[P16](p16, p, 15)
         fields ++= productElement2Field[P17](p17, p, 16)
         fields ++= productElement2Field[P18](p18, p, 17)
-        fields ++= p.options
+        fields ++= p.other
         JsObject(fields: _*)
       }
 
@@ -536,7 +536,7 @@ new JsonWriter[T] {
           fields ++= productElement2Field[P17](p17, p, 16)
           fields ++= productElement2Field[P18](p18, p, 17)
           fields ++= productElement2Field[P19](p19, p, 18)
-          fields ++= p.options
+          fields ++= p.other
           JsObject(fields: _*)
         }
 
@@ -572,7 +572,7 @@ new JsonWriter[T] {
             fields ++= productElement2Field[P18](p18, p, 17)
             fields ++= productElement2Field[P19](p19, p, 18)
             fields ++= productElement2Field[P20](p20, p, 19)
-            fields ++= p.options
+            fields ++= p.other
             JsObject(fields: _*)
           }
 
@@ -609,7 +609,7 @@ new JsonWriter[T] {
               fields ++= productElement2Field[P19](p19, p, 18)
               fields ++= productElement2Field[P20](p20, p, 19)
               fields ++= productElement2Field[P21](p21, p, 20)
-              fields ++= p.options
+              fields ++= p.other
               JsObject(fields: _*)
             }
 
@@ -647,7 +647,7 @@ new JsonWriter[T] {
                 fields ++= productElement2Field[P20](p20, p, 19)
                 fields ++= productElement2Field[P21](p21, p, 20)
                 fields ++= productElement2Field[P22](p22, p, 21)
-                fields ++= p.options
+                fields ++= p.other
                 JsObject(fields: _*)
               }
 

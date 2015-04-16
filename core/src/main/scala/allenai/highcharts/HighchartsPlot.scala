@@ -1,7 +1,7 @@
 package allenai.highcharts
 
 import com.quantifind.charts.Plotter
-import com.quantifind.charts.repl.{XYData, IterablePair}
+import com.quantifind.charts.repl.SeriesData
 
 /**
  * Created by rodneykinney on 4/14/15.
@@ -19,14 +19,14 @@ trait BasePlot[T <: BasePlot[T]] {
     this.asInstanceOf[T]
   }
 
-  def title = api.title.wrapper(t => update(data.copy(title = t)))
+  def title = api.title.update(t => update(data.copy(title = t)))
 
-  def addSeries(xyData: XYData) =
-    update(api.copy(series = api.series :+ (Series.pairs(data = xyData.xy, `type` = api.series.head.`type`))))
+  def addSeries(xyData: SeriesData) =
+    update(api.copy(series = api.series :+ (Series(data = xyData.points, `type` = api.series.head.`type`))))
 
-  def layout = api.chart.wrapper(c => update(data.copy(chart = c)))
+  def layout = api.chart.update(c => update(data.copy(chart = c)))
 
-  def exporting = api.exporting.wrapper(e => update(data.copy(exporting = e)))
+  def exporting = api.exporting.update(e => update(data.copy(exporting = e)))
 }
 
 class LinePlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
@@ -36,14 +36,14 @@ trait HasXYAxis[T <: BasePlot[T]] extends BasePlot[T] {
 
   def xAxis(idx: Int): AxisAPI[T] = {
     val axis: Axis = api.xAxis(idx)
-    axis.wrapper { a =>
+    axis.update { a =>
       update(data.copy(xAxis = data.xAxis.updated(idx,a)))
     }
   }
   def xAxis: AxisAPI[T] = xAxis(0)
   def yAxis(idx: Int): AxisAPI[T] = {
     val axis: Axis = api.yAxis(idx)
-    axis.wrapper { a =>
+    axis.update { a =>
       update(data.copy(yAxis = data.yAxis.updated(idx,a)))
     }
   }
