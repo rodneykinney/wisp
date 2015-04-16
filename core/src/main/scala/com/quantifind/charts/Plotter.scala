@@ -1,12 +1,14 @@
 package com.quantifind.charts
 
 import java.io.{PrintWriter, File}
-
+import allenai.highcharts.{AllFormats, HighchartAPI}
 import com.quantifind.charts.highcharts.Highchart
 import com.quantifind.charts.repl.{Hold, PlotServer}
 import org.apache.commons.io.FileUtils
 import unfiltered.jetty.Server
 import unfiltered.util.Port
+import spray.json._
+import AllFormats._
 
 import scala.concurrent.Promise
 import scala.util.{Failure, Try, Random}
@@ -20,17 +22,17 @@ trait Plotter[T, TRef] {
   def plots: Seq[T]
 }
 
-class WebPlotter extends Plotter[Highchart, Highchart] {
+class WebPlotter extends Plotter[HighchartAPI, HighchartAPI] {
 
-  var plots = Vector[Highchart]()
+  var plots = Vector[HighchartAPI]()
 
-  def addPlot(plot: Highchart) = {
+  def addPlot(plot: HighchartAPI) = {
     plots = plots :+ plot
     refresh()
     plot
   }
 
-  def updatePlot(id: Highchart, newPlot: Highchart) = {
+  def updatePlot(id: HighchartAPI, newPlot: HighchartAPI) = {
     val idx = plots.indexOf(id)
     require(idx >= 0, "Attempt to update non-existing plot")
     plots = plots.updated(idx, newPlot)
@@ -206,16 +208,16 @@ class WebPlotter extends Plotter[Highchart, Highchart] {
       |<html>
       |  <head>
       |    <title>
-      |      Highchart
+      |      HighchartAPI
       |    </title>
       |    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     """.stripMargin +
         wispJsImports
 
-  def highchartsContainer(hc: Highchart): String = {
+  def highchartsContainer(hc: HighchartAPI): String = {
     val hash = hc.hashCode()
     val containerId = Random.nextInt(1e10.toInt) + (if (hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
-    highchartsContainer(hc.toJson, containerId)
+    highchartsContainer(hc.toJson.toString, containerId)
   }
 
   def highchartsContainer(json: String, index: Int): String =
@@ -235,7 +237,7 @@ class WebPlotter extends Plotter[Highchart, Highchart] {
 
   def containerDivs(index: Int) =
     s"""
-       |   <div id="container%s" style="min-width: 400px; height: 400px; margin: 0 auto"></div>
+       |   <div id="container%s"></div>
     """.stripMargin.format(index.toString)
 }
 

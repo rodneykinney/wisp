@@ -1,40 +1,40 @@
+import java.awt.Color
+
 import allenai._
-import com.quantifind.charts.highcharts.{AxisType, Stacking}
+import allenai.highcharts._
 
 object Scratch {
 
   val x = (1 to 100).map(_ * .01)
 
   def main(args: Array[String]): Unit = {
-    import spray.json.DefaultJsonProtocol._
-    import spray.json._
-    import allenai.AllFormats._
-    val d = HighchartAPI(series = List(Series(List(NumericalData(1,10), NumericalData(2,40), NumericalData(3,90)))))
-    d.addOption("a","A")
-    d.addOption("pair",(3,List("X","Y")))
-    d.addOption("empty",List.empty[Int])
-    val d2 = HighchartAPI()
-    d.addOption("child",d2)
-    val s = d.toJson.toString()
-    val ss = HighchartAPI(series = List(Series(List(NumericalData(1,10), NumericalData(2,40), NumericalData(3,90))))).toJson.toString()
-    newAPI
-    //        oldAPI
+        newAPI
+//    oldAPI
   }
 
   def newAPI: Unit = {
     import Plot._
-    val l = line(x,x).xAxisType(AxisType.logarithmic)
+    val l = line(x, x).xAxis.axisType(AxisType.logarithmic)
     val lineChart = line(x, x)
-        .title("Two curves")
+        .title.text("Two curves")
         .addSeries(x, (t: Double) => math.sin(t * 4 * math.Pi))
         .legend("line", "sinusoid")
-        .xAxisLabel("Distance")
-        .yAxisLabel("Dollars")
-        .xAxisType(AxisType.logarithmic)
+        .xAxis.title.text("Distance")
+        .yAxis.min(-1)
+        .yAxis.max(1)
+        .addXAxis(Axis(title=AxisTitle("Other Axis")))
+        .yAxis.title.text("Dollars")
+        .xAxis.axisType(AxisType.logarithmic)
+        .layout.width(800)
+    lineChart.layout.width(800)
     val x1 = x.take(10) ++ x.drop(80).take(10)
-    val lc1 = line((x1, x1))
-        .xAxisRange(.3, .7)
-        .yAxisRange(-1, 1)
+    val lc1 = line(x1, x1)
+        .xAxis.title.text("Something")
+        .xAxis.min(.3)
+        .xAxis.max(.7)
+        .yAxis.min(-1)
+        .yAxis.max(1)
+    .exporting.enabled(false)
 
     val lcAA = line(List("a", "b", "c"), List("One", "Two", "Three"))
     val lcAN = line(List("a", "b", "c"), List(1.0, 2.0, 3.0))
@@ -48,13 +48,13 @@ object Scratch {
 
   def oldAPI: Unit = {
     import com.quantifind.charts.Highcharts._
-    val chart = line(List(10.0, 20.0, 30.0))
-    xAxisCategories("ten", "twenty", "thirty")
-    xAxisType(AxisType.logarithmic)
-    //    hold()
-    //    line(x, (t: Double) => math.sin(t * 4 * math.Pi))
+//    val chart = line(List(10.0, 20.0, 30.0))
+//    xAxisCategories("ten", "twenty", "thirty")
+//    xAxisType(com.quantifind.charts.highcharts.AxisType.logarithmic)
     //    chart.legend(List("linear2", "sin2"))
-    //    legend(List("linear", "sin"))
+    line(x, (t: Double) => math.sin(t * 4 * math.Pi))
+    line(x, (t: Double) => math.sin(t * 4 * math.Pi))
+//    legend(List("linear", "sin"))
   }
 
   def testSyntax: Unit = {

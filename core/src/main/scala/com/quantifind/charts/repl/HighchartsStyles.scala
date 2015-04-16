@@ -62,19 +62,19 @@ trait HighchartsStyles extends Hold with Labels[Highchart] with WebPlotHighchart
   // Change the type of the x-axis, ie logarithmic
   // To convert to categories prefer xAxisCategories
   @deprecated
-  def xAxisType(plot: Highchart, label: AxisType): Highchart = {
+  def xAxisType(plot: Highchart, label: AxisType.Type): Highchart = {
     plot.xAxisType(label)
   }
   @deprecated
-  def xAxisType(label: AxisType): Highchart = {
+  def xAxisType(label: AxisType.Type): Highchart = {
     updatePlot(xAxisType _, label)
   }
   @deprecated
-  def yAxisType(plot: Highchart, label: AxisType): Highchart = {
+  def yAxisType(plot: Highchart, label: AxisType.Type): Highchart = {
     plot.yAxisType(label)
   }
   @deprecated
-  def yAxisType(label: AxisType): Highchart = {
+  def yAxisType(label: AxisType.Type): Highchart = {
     updatePlot(yAxisType _, label)
   }
 

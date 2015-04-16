@@ -42,16 +42,8 @@ object Layout {
 object AxisType {
   type Type = String
   def values = Set(category, datetime, linear, logarithmic)
-  case object category extends AxisType
-  case object datetime extends AxisType
-  case object linear extends AxisType
-  case object logarithmic extends AxisType
+  val (category, linear, logarithmic, datetime) = ("category", "linear","logarithmic","datetime")
 }
-
-sealed trait AxisType {
-  override def toString = this.getClass.getSimpleName.stripSuffix("$")
-}
-
 
 object SeriesType {
   type Type = String

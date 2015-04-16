@@ -15,26 +15,22 @@ trait IterablePair[A, B] {
   def toIterables: (Iterable[A], Iterable[B])
 }
 
-sealed trait LinePlotData
+sealed trait SeriesData
 
-trait XYData extends LinePlotData {
-  def x: Iterable[Double]
-  def y: Iterable[Double]
+trait XYData extends SeriesData {
+  def xy: Iterable[(Double, Double)]
 }
 
-trait LabeledXData extends LinePlotData {
-  def x: Iterable[Double]
-  def labels: Iterable[String]
+trait LabeledXData extends SeriesData {
+  def x: Iterable[(Double, String)]
 }
 
-trait LabeledYData extends LinePlotData {
-  def y: Iterable[Double]
-  def labels: Iterable[String]
+trait LabeledYData extends SeriesData {
+  def y: Iterable[(String, Double)]
 }
 
-trait LabeledXYData extends LinePlotData {
-  def xLabels: Iterable[String]
-  def yLabels: Iterable[String]
+trait LabeledXYData extends SeriesData {
+  def xyLabels: Iterable[(String, String)]
 }
 
 trait HasCategories {
@@ -51,14 +47,12 @@ trait IterablePairConversions {
 
   implicit class DataFromStringAndIterable[B <% Double](ab: (Iterable[String], Iterable[B]))
       extends LabeledYData {
-    def y = ab._2.map(_.toDouble)
-    def labels = ab._1
+    def y = ab._1.zip(ab._2).map { case (l, y) => (l, y.toDouble) }
   }
 
   implicit class DataFromIterableAndString[A <% Double](ab: (Iterable[A], Iterable[String]))
       extends LabeledXData {
-    def x = ab._1.map(_.toDouble)
-    def labels = ab._2
+    def x = ab._1.zip(ab._2).map { case (x, l) => (x.toDouble, l) }
   }
 
   implicit class PairFromStringAndArray[B](ab: (Array[String], Array[B]))
@@ -70,8 +64,7 @@ trait IterablePairConversions {
 
   implicit class DataFromStringAndArray[B <% Double](ab: (Iterable[String], Array[B]))
       extends LabeledYData {
-    def y = ab._2.map(_.toDouble)
-    def labels = ab._1
+    def y = ab._1.zip(ab._2).map { case (l, y) => (l, y.toDouble) }
   }
 
   implicit class PairFromIterableStringTuple[B](ab: (Iterable[(String, B)]))
@@ -83,8 +76,7 @@ trait IterablePairConversions {
 
   implicit class DataFromIterableStringTuple[B <% Double](ab: (Iterable[(String, B)]))
       extends LabeledYData {
-    def labels = ab.map(_._1)
-    def y = ab.map(_._2.toDouble)
+    def y = ab.map{case (l, y) => (l,y.toDouble)}
   }
 
   implicit class PairFromArrayStringTuple[B](ab: (Array[(String, B)]))
@@ -96,8 +88,7 @@ trait IterablePairConversions {
 
   implicit class DataFromArrayStringTuple[B <% Double](ab: (Array[(String, B)]))
       extends LabeledYData {
-    def labels = ab.map(_._1)
-    def y = ab.map(_._2.toDouble)
+    def y = ab.map{case (l, y) => (l,y.toDouble)}
   }
 
   implicit class PairFromIterableFunction[A, B](ab: (Iterable[A], A => B))
@@ -107,8 +98,7 @@ trait IterablePairConversions {
 
   implicit class DataFromIterableFunction[A <% Double, B <% Double](ab: (Iterable[A], A => B))
       extends XYData {
-    def x= ab._1.map(_.toDouble)
-    def y=ab._1.map(ab._2).map(_.toDouble)
+    def xy = ab._1.map(x => (x.toDouble, ab._2(x).toDouble))
   }
 
   implicit class PairFromArrayFunction[A, B](ab: (Array[A], A => B))
@@ -118,8 +108,7 @@ trait IterablePairConversions {
 
   implicit class DataFromArrayFunction[A <% Double, B <% Double](ab: (Array[A], A => B))
       extends XYData {
-    def x= ab._1.map(_.toDouble)
-    def y=ab._1.map(ab._2).map(_.toDouble)
+    def xy = ab._1.map(x => (x.toDouble, ab._2(x).toDouble))
   }
 
   implicit class PairFromFunctionArray[A, B](ab: (A => B, Array[A]))
@@ -129,8 +118,7 @@ trait IterablePairConversions {
 
   implicit class DataFromFunctionArray[A <% Double, B <% Double](ab: (A => B, Array[A]))
       extends XYData {
-    def x = ab._2.map(_.toDouble)
-    def y = ab._2.map(ab._1).map(_.toDouble)
+    def xy = ab._2.map(x => (x.toDouble, ab._1(x).toDouble))
   }
 
   implicit class PairFromFunction[A, B](ab: (A => B, Iterable[A]))
@@ -140,8 +128,7 @@ trait IterablePairConversions {
 
   implicit class DataFromFunctionIterable[A <% Double, B <% Double](ab: (A => B, Iterable[A]))
       extends XYData {
-    def x = ab._2.map(_.toDouble)
-    def y = ab._2.map(ab._1).map(_.toDouble)
+    def xy = ab._2.map(x => (x.toDouble, ab._1(x).toDouble))
   }
 
   implicit class PairFromPairOfIterables[A, B](ab: (Iterable[A], Iterable[B]))
@@ -151,8 +138,7 @@ trait IterablePairConversions {
 
   implicit class DataFromPairOfIterables[A <% Double, B <% Double](ab: (Iterable[A], Iterable[B]))
       extends XYData {
-    def x = ab._1.map(_.toDouble)
-    def y = ab._2.map(_.toDouble)
+    def xy = ab._1.zip(ab._2).map { case (x, y) => (x.toDouble, y.toDouble) }
   }
 
   implicit class PairFromPairOfArrays[A, B](ab: (Array[A], Array[B]))
@@ -162,8 +148,7 @@ trait IterablePairConversions {
 
   implicit class DataFromPairOfArrays[A <% Double, B <% Double](ab: (Array[A], Array[B]))
       extends XYData {
-    def x = ab._1.map(_.toDouble)
-    def y = ab._2.map(_.toDouble)
+    def xy = ab._1.zip(ab._2).map { case (x, y) => (x.toDouble, y.toDouble) }
   }
 
   implicit class PairFromIterableTuple[A, B](ab: (Iterable[(A, B)]))
@@ -173,8 +158,7 @@ trait IterablePairConversions {
 
   implicit class DataFromIterableTuple[A <% Double, B <% Double](ab: (Iterable[(A, B)]))
       extends XYData {
-    def x = ab.map(_._1.toDouble)
-    def y = ab.map(_._2.toDouble)
+    def xy = ab.map { case (x, y) => (x.toDouble, y.toDouble) }
   }
 
   implicit class PairFromArrayTuple[A, B](ab: (Array[(A, B)]))
@@ -184,8 +168,7 @@ trait IterablePairConversions {
 
   implicit class DataFromArrayTuple[A <% Double, B <% Double](ab: (Array[(A, B)]))
       extends XYData {
-    def x = ab.map(_._1.toDouble)
-    def y = ab.map(_._2.toDouble)
+    def xy = ab.map { case (x, y) => (x.toDouble, y.toDouble) }
   }
 
   implicit class PairFromIterable[B](b: (Iterable[B]))
@@ -195,8 +178,7 @@ trait IterablePairConversions {
 
   implicit class DataFromIterable[B <% Double](b: (Iterable[B]))
       extends XYData {
-    def x = (0 until b.size).map(_.toDouble)
-    def y = b.map(_.toDouble)
+    def xy = b.zipWithIndex.map{case (b,i) => (i.toDouble, b.toDouble)}
   }
 
   implicit class PairFromArray[B](b: (Array[B]))
@@ -206,16 +188,13 @@ trait IterablePairConversions {
 
   implicit class DataFromArray[B <% Double](b: (Array[B]))
       extends XYData {
-    def x = (0 until b.size).map(_.toDouble)
-    def y = b.map(_.toDouble)
+    def xy = b.zipWithIndex.map{case (b,i) => (i.toDouble, b.toDouble)}
   }
 
   implicit class DataFromStringIterables(ab: (Iterable[String], Iterable[String]))
       extends LabeledXYData {
-    def xLabels = ab._1
-    def yLabels = ab._2
+    def xyLabels = ab._1.zip(ab._2)
   }
-
 
 
 }

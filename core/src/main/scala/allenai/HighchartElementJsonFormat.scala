@@ -2,6 +2,7 @@ package allenai
 
 import java.lang.reflect.Modifier
 
+import allenai.highcharts.HighchartElement
 import spray.json._
   import spray.json.DefaultJsonProtocol._
 

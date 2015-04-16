@@ -185,7 +185,7 @@ case class Highchart(
 
   // Change the type of the axis, ie logarithmic
   // To convert to categories prefer xAxisCategories
-  def xAxisType(axisType: AxisType): Highchart = {
+  def xAxisType(axisType: AxisType.Type): Highchart = {
     if (!AxisType.values.contains(axisType)) {
       println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
       return this
@@ -198,7 +198,7 @@ case class Highchart(
     }))
   }
 
-  def yAxisType(axisType: AxisType): Highchart = {
+  def yAxisType(axisType: AxisType.Type): Highchart = {
     if (!AxisType.values.contains(axisType)) {
       println(s"Not an acceptable axis type. Options are: ${AxisType.values.mkString(", ")}.")
       return this
