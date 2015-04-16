@@ -1,4 +1,4 @@
-import allenai.Plot
+import allenai.{HighchartElementJsonFormat, HighchartElement, HighchartData, Plot}
 import com.quantifind.charts.highcharts.{AxisType, Stacking}
 
 object Scratch {
@@ -6,6 +6,15 @@ object Scratch {
   val x = (1 to 100).map(_ * .01)
 
   def main(args: Array[String]): Unit = {
+    import spray.json.DefaultJsonProtocol._
+    val d = HighchartData(1,"one")
+    d.addOption("a","A")
+    d.addOption("pair",(3,List("X","Y")))
+    d.addOption("empty",List.empty[Int])
+    implicit val format = HighchartElementJsonFormat(HighchartData)
+    val d2 = HighchartData(2,"two")
+    d.addOption("child",d2)
+    val s = d.toJson.toString()
     newAPI
     //        oldAPI
   }
