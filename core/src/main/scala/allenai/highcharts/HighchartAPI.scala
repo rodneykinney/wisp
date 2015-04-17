@@ -5,10 +5,6 @@ import java.awt.Color
 import allenai._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
-import sun.jvm.hotspot.debugger.cdbg.EnumType
-
-import scala.collection.mutable
-
 /**
  * Created by rodneykinney on 4/15/15.
  */
@@ -16,20 +12,14 @@ case class HighchartAPI(
     chart: Chart = Chart(),
     exporting: Exporting = Exporting(),
     legend: Legend = Legend(),
-    series: Seq[Series] = Seq(),
+    series: IndexedSeq[Series] = Vector(),
     subtitle: Title = null,
+    plotOptions: PlotOptions = null,
     title: Title = Title(),
     xAxis: IndexedSeq[Axis] = Vector(Axis()),
     yAxis: IndexedSeq[Axis] = Vector(Axis()),
     other: Map[String, JsValue] = Map())
     extends HighchartElement {
-}
-
-object HighchartAPI {
-//  def pairs[T <% Double](data: Iterable[(T, T)], `type`: SeriesType) =
-//    HighchartAPI(series = List(Series.pairs(data, `type`)))
-//  def singleValue[T <% Double](data: Iterable[T], `type`: SeriesType) =
-//    HighchartAPI(series = List(Series.singleValue(data, `type`)))
 }
 
 case class Chart(
@@ -56,6 +46,24 @@ case class Exporting(enabled: Boolean = true,
   }
 }
 
+case class PlotOptions(
+    area: PlotSettings = null,
+    areaspline: PlotSettings = null,
+    bar: PlotSettings = null,
+    column: PlotSettings = null,
+    line: PlotSettings = null,
+    other: Map[String, JsValue] = Map()) extends HighchartElement
+
+case class PlotSettings(
+    stacking: Stacking = null,
+    shadow: Option[Boolean] = None,
+    other: Map[String, JsValue] = Map()) extends HighchartElement
+
+sealed trait Stacking extends EnumTrait
+object Stacking {
+  case object normal extends Stacking
+  case object percent extends Stacking
+}
 case class Legend(
     x: Option[Int] = None,
     y: Option[Int] = None,
@@ -69,13 +77,10 @@ case class Series(
     name: String = "",
     `type`: SeriesType,
     other: Map[String, JsValue] = Map()
-    ) extends HighchartElement
-
-object Series {
-//  def pairs[T <% Double](data: Iterable[(T, T)], `type`: SeriesType) =
-//    new Series(data = data.toSeq.map { case (a, b) => RichPoint(a.toDouble, b.toDouble) }, `type` = `type`)
-//  def singleValue[T <% Double](data: Iterable[T], `type`: SeriesType) =
-//    new Series(data = data.toSeq.map(x => YValue(x.toDouble)), `type` = `type`)
+    ) extends HighchartElement {
+  def update[T](update: Series => T) = new {
+    def name(s: String) = update(copy(name=s))
+  }
 }
 
 sealed trait Point extends HighchartElement
@@ -174,6 +179,7 @@ object SeriesType {
 
 
 object AllFormats {
+  import allenai.{HighchartElementJsonFormat => js}
   implicit def writerToFormat[T](writer: JsonWriter[T]) = new JsonFormat[T] {
     override def write(obj: T): JsValue = writer.write(obj)
 
@@ -184,16 +190,19 @@ object AllFormats {
     new JsonWriter[Color] {
       def write(c: Color) = "#%02x%02x%02x".format(c.getRed, c.getGreen, c.getBlue).toJson
     }
-  implicit val chart = HighchartElementJsonFormat(Chart)
-  implicit val align = HighchartElementJsonFormat.asString[Align]
-  implicit val title = HighchartElementJsonFormat(Title)
-  implicit val axisTitle = HighchartElementJsonFormat(AxisTitle)
-  implicit val axisType = HighchartElementJsonFormat.asString[AxisType]
-  implicit val axis: JsonFormat[Axis] = HighchartElementJsonFormat(Axis)
-  implicit val exporting = HighchartElementJsonFormat(Exporting)
-  implicit val legend = HighchartElementJsonFormat(Legend)
-  implicit val dataLabels = HighchartElementJsonFormat(DataLabels)
-  implicit val richPoint = HighchartElementJsonFormat(RichPoint)
+  implicit val chart: JsonFormat[Chart] = js(Chart)
+  implicit val align: JsonFormat[Align] = js.asString[Align]
+  implicit val title: JsonFormat[Title] = js(Title)
+  implicit val axisTitle: JsonFormat[AxisTitle] = js(AxisTitle)
+  implicit val axisType: JsonFormat[AxisType] = js.asString[AxisType]
+  implicit val axis: JsonFormat[Axis] = js(Axis)
+  implicit val exporting: JsonFormat[Exporting] = js(Exporting)
+  implicit val legend: JsonFormat[Legend] = js(Legend)
+  implicit val dataLabels: JsonFormat[DataLabels] = js(DataLabels)
+  implicit val richPoint: JsonFormat[RichPoint] = js(RichPoint)
+  implicit val stacking: JsonFormat[Stacking] = js.asString[Stacking]
+  implicit val plotSettings: JsonFormat[PlotSettings] = js(PlotSettings)
+  implicit val plotOptions: JsonFormat[PlotOptions] = js(PlotOptions)
   implicit val data: JsonFormat[Point] = new JsonWriter[Point] {
     def write(obj: Point) = obj match {
       case n: XYValue => (n.x, n.y).toJson
@@ -201,9 +210,9 @@ object AllFormats {
       case p: RichPoint => richPoint.write(p)
     }
   }
-  implicit val seriesType: JsonFormat[SeriesType] = HighchartElementJsonFormat.asString[SeriesType]
-  implicit val series: JsonFormat[Series] = HighchartElementJsonFormat(Series.apply _)
-  implicit val highchartData = HighchartElementJsonFormat(HighchartAPI.apply _)
+  implicit val seriesType: JsonFormat[SeriesType] = js.asString[SeriesType]
+  implicit val series: JsonFormat[Series] = js(Series)
+  implicit val highchartData: JsonFormat[HighchartAPI] = js(HighchartAPI)
 }
 
 

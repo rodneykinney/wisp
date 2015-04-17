@@ -10,13 +10,18 @@ import com.quantifind.charts.repl._
 object Plot extends WebPlotter with IterablePairConversions {
   implicit val plotter = this
 
-  def line(data: SeriesData) = {
-    val hc = HighchartAPI(series = List(Series(data.points, `type` = SeriesType.line)))
-    new LinePlot(hc, plotter)
-  }
+  private def hc(data: SeriesData, st: SeriesType) =
+    HighchartAPI(series = Vector(Series(data.points, `type` = st)))
 
-  def area(data: SeriesData) =
-    new LinePlot(HighchartAPI(series = List(Series(data.points, `type` = SeriesType.area))), plotter)
+  def line(data: SeriesData) = new LinePlot(hc(data, SeriesType.line), plotter)
+
+  def area(data: SeriesData) = new LinePlot(hc(data, SeriesType.area), plotter)
+
+  def areaSpline(data: SeriesData) = new LinePlot(hc(data, SeriesType.areaspline), plotter)
+
+  def bar(data: SeriesData) = new BarPlot(hc(data, SeriesType.bar), plotter)
+
+  def column(data: SeriesData) = new ColumnPlot(hc(data, SeriesType.column), plotter)
 }
 
 

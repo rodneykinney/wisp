@@ -6,6 +6,7 @@ import allenai.highcharts._
 object Scratch {
 
   val x = (1 to 100).map(_ * .01)
+  val y = x.map(t => t * t * t * t)
 
   def main(args: Array[String]): Unit = {
     newAPI
@@ -14,8 +15,17 @@ object Scratch {
 
   def newAPI: Unit = {
     import Plot._
+    val b = bar(x.take(10))
+        .addSeries(x.drop(20).take(10))
+        .stack()
+        .series(0).name("Apples")
+        .series(1).name("Oranges")
+    column(x.take(10))
+        .addSeries(x.drop(20).take(10))
+        .stack()
+    val as = areaSpline(x, y)
     val l = line(x, x).xAxis.axisType(AxisType.logarithmic)
-    val a = area(x,x)
+    val a = area(x, x)
     val lineChart = line(x, x)
         .title.text("Two curves")
         .addSeries(x, (t: Double) => math.sin(t * 4 * math.Pi))
@@ -36,8 +46,8 @@ object Scratch {
         .yAxis.max(1)
         .exporting.enabled(false)
 
-//    val lcAA = line(List("a", "b", "c"), List("One", "Two", "Three"))
-//    val lcAN = line(List("a", "b", "c"), List(1.0, 2.0, 3.0))
+    //    val lcAA = line(List("a", "b", "c"), List("One", "Two", "Three"))
+    //    val lcAN = line(List("a", "b", "c"), List(1.0, 2.0, 3.0))
     val lcNA = line(List(1.0, 2.0, 3.0), List("One", "Two", "Three"))
     //    val lc2 = line(x, x)
     //        .title("Categories")
