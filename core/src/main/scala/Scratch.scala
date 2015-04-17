@@ -55,36 +55,4 @@ object Scratch {
     //    val pieChart = ???
     //    line(x, (t: Double) => math.sin(t * 4 * math.Pi)).title("Sin wave")
   }
-
-  def oldAPI: Unit = {
-    import com.quantifind.charts.Highcharts._
-    //    val chart = line(List(10.0, 20.0, 30.0))
-    //    xAxisCategories("ten", "twenty", "thirty")
-    //    xAxisType(com.quantifind.charts.highcharts.AxisType.logarithmic)
-    //    chart.legend(List("linear2", "sin2"))
-    line(x, (t: Double) => math.sin(t * 4 * math.Pi))
-    line(x, (t: Double) => math.sin(t * 4 * math.Pi))
-    //    legend(List("linear", "sin"))
-  }
-
-  def testSyntax: Unit = {
-    import com.quantifind.charts.Highcharts._
-    line(x)
-    line(x, x)
-    line(x, (t: Double) => t * t)
-    line((t: Double) => t * t, x)
-    histogram(x)
-    column(x.map(_.toString), x)
-    pie(x.map(_.toString), x)
-
-    val a = x.toArray
-    line(a)
-    line(a, a)
-    line(a, (t: Double) => t * t)
-    line((t: Double) => t * t, a)
-    //    histogram(a)
-    column(a.map(_.toString), a)
-    pie(a.map(_.toString), a)
-  }
-
 }

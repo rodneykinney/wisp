@@ -1,6 +1,6 @@
 package allenai.highcharts
 
-import com.quantifind.charts.Plotter
+import allenai.Plotter
 import com.quantifind.charts.repl.SeriesData
 
 /**

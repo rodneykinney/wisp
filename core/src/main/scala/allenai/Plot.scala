@@ -1,7 +1,6 @@
 package allenai
 
 import allenai.highcharts._
-import com.quantifind.charts.WebPlotter
 import com.quantifind.charts.repl._
 
 /**

@@ -1,17 +1,17 @@
-package com.quantifind.charts
+package allenai
 
-import java.io.{PrintWriter, File}
-import allenai.highcharts.{AllFormats, HighchartAPI}
-import com.quantifind.charts.highcharts.Highchart
-import com.quantifind.charts.repl.{Hold, PlotServer}
+import java.io.{File, PrintWriter}
+
+import allenai.highcharts.AllFormats._
+import allenai.highcharts.HighchartAPI
+import com.quantifind.charts.repl.PlotServer
 import org.apache.commons.io.FileUtils
+import spray.json._
 import unfiltered.jetty.Server
 import unfiltered.util.Port
-import spray.json._
-import AllFormats._
 
 import scala.concurrent.Promise
-import scala.util.{Failure, Try, Random}
+import scala.util.{Failure, Random, Try}
 
 /**
  * Created by rodneykinney on 4/14/15.
