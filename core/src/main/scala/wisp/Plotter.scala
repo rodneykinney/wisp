@@ -33,7 +33,7 @@ case class PlotsHolder[T, TRef](plotsWithId: Vector[(TRef, T)] = Vector()) {
       case Some(i) =>
         PlotsHolder(plotsWithId.updated(i, (newId, newPlot)))
       case None =>
-        this
+        PlotsHolder(plotsWithId :+ (newId, newPlot))
     }
   }
 
@@ -42,6 +42,7 @@ case class PlotsHolder[T, TRef](plotsWithId: Vector[(TRef, T)] = Vector()) {
   }
 
   def plots = plotsWithId.map(_._2)
+
 }
 
 abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
@@ -67,11 +68,13 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
     newId
   }
 
-  def removePlot(id: TRef) = {
+  def removePlot(id: TRef): TRef = {
     undoRedo.push(holder.remove(id))
     refresh()
     id
   }
+
+  def removePlot(idx: Int): TRef = removePlot(idFor(plots(idx)))
 
   def undo() = {
     undoRedo.undo()
@@ -82,6 +85,8 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
     undoRedo.redo()
     refresh()
   }
+
+  def clear() = undoRedo.push(PlotsHolder())
 
   private var port = Port.any
   private var serverMode = false

@@ -1,6 +1,7 @@
 package wisp.highcharts
 
 import java.awt.Color
+import javax.jws.WebMethod
 
 import wisp._
 import spray.json.DefaultJsonProtocol._
@@ -24,8 +25,21 @@ case class HighchartAPI(
     other: Map[String, JsValue] = Map())
     extends HighchartElement {
   def update[T](update: HighchartAPI => T) = new API {
-    @help("size, borders, margins, etc.")
+    @WebMethod(action = "Size, borders, margins, etc.")
     def layout = chart.update(c => update(copy(chart = c)))
+    @WebMethod(action = "Export to png, pdf, etc.")
+    def exporting = HighchartAPI.this.exporting.update(e => update(copy(exporting = e)))
+    @WebMethod(action = "Series data attributes")
+    def series(idx: Int) = HighchartAPI.this.series(idx).update(s => update(copy(series = HighchartAPI.this.series.updated(idx, s))))
+    @WebMethod(action = "Add new data series")
+    def addSeries(xyData: SeriesData) = update {
+      val oldSeries = HighchartAPI.this.series
+      val seriesType = if (oldSeries.size > 0) oldSeries(0).`type` else SeriesType.line
+      HighchartAPI.this.copy(series =
+          oldSeries :+ Series(data = xyData.points, `type` = seriesType))
+    }
+    @WebMethod(action = "Title options")
+    def title = HighchartAPI.this.title.update(t => update(HighchartAPI.this.copy(title = t)))
   }
 }
 
@@ -140,8 +154,6 @@ case class AxisTitle(text: String = "",
   }
 }
 
-class help(msg: String) extends StaticAnnotation
-
 trait API {
   def help = {
     for {
@@ -149,11 +161,12 @@ trait API {
       method = m.getName
       if (method.indexOf('$') < 0 && method != "help")
     } {
+      val msg = Option(m.getAnnotation(classOf[WebMethod])).map(s => s" -- ${s.action}").getOrElse("")
       val params = m.getParameterTypes.map(_.getSimpleName) match {
         case Array() => ""
-        case a => a.mkString("(",",",")")
+        case a => a.mkString("(", ",", ")")
       }
-      println(s"${m.getName}$params")
+      println(s"${m.getName}$params$msg")
     }
   }
 }

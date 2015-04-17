@@ -20,17 +20,16 @@ trait BasePlot[T <: BasePlot[T]] {
 
   def remove() = plotter.removePlot(data)
 
-  def title = api.title.update(t => update(data.copy(title = t)))
+  def title = api.update(update).title
 
-  def addSeries(xyData: SeriesData) =
-    update(api.copy(series = api.series :+ (Series(data = xyData.points, `type` = api.series.head.`type`))))
+  def addSeries(xyData: SeriesData) = api.update(update).addSeries(xyData)
 
-  def series(idx: Int) = data.series(idx).update(s => update(data.copy(series = data.series.updated(idx, s))))
+  def series(idx: Int) = api.update(update).series(idx)
 
   def layout = api.update(update).layout
   def help = api.update(update).help
 
-  def exporting = api.exporting.update(e => update(data.copy(exporting = e)))
+  def exporting = api.update(update).exporting
 }
 
 class LinePlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
