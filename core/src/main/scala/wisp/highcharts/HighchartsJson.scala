@@ -1,17 +1,52 @@
-package allenai
+package wisp.highcharts
 
+import java.awt.Color
 import java.lang.reflect.Modifier
 
-import allenai.highcharts.HighchartElement
+import spray.json.DefaultJsonProtocol._
 import spray.json._
-  import spray.json.DefaultJsonProtocol._
 
 import scala.util.control.NonFatal
 
 /**
  * Created by rodneykinney on 4/15/15.
  */
-object HighchartElementJsonFormat {
+object HighchartsJson {
+    implicit def writerToFormat[T](writer: JsonWriter[T]) = new JsonFormat[T] {
+      override def write(obj: T): JsValue = writer.write(obj)
+
+      override def read(json: JsValue): T = ???
+    }
+
+    implicit val color =
+      new JsonWriter[Color] {
+        def write(c: Color) = "#%02x%02x%02x".format(c.getRed, c.getGreen, c.getBlue).toJson
+      }
+    implicit val chart: JsonFormat[Chart] = this(Chart)
+    implicit val align: JsonFormat[Align] = asString[Align]
+    implicit val title: JsonFormat[Title] = this(Title)
+    implicit val axisTitle: JsonFormat[AxisTitle] = this(AxisTitle)
+    implicit val axisType: JsonFormat[AxisType] = asString[AxisType]
+    implicit val axis: JsonFormat[Axis] = this(Axis)
+    implicit val exporting: JsonFormat[Exporting] = this(Exporting)
+    implicit val legend: JsonFormat[Legend] = this(Legend)
+    implicit val dataLabels: JsonFormat[DataLabels] = this(DataLabels)
+    implicit val richPoint: JsonFormat[RichPoint] = this(RichPoint)
+    implicit val stacking: JsonFormat[Stacking] = asString[Stacking]
+    implicit val plotSettings: JsonFormat[PlotSettings] = this(PlotSettings)
+    implicit val plotOptions: JsonFormat[PlotOptions] = this(PlotOptions)
+    implicit val data: JsonFormat[Point] = new JsonWriter[Point] {
+      def write(obj: Point) = obj match {
+        case n: XYValue => (n.x, n.y).toJson
+        case n: YValue => n.value.toJson
+        case p: RichPoint => richPoint.write(p)
+      }
+    }
+    implicit val seriesType: JsonFormat[SeriesType] = asString[SeriesType]
+    implicit val series: JsonFormat[Series] = this(Series)
+    implicit val highchartData: JsonFormat[HighchartAPI] = this(HighchartAPI)
+
+
   private[this] type JF[T] = JsonWriter[T] // simple alias for reduced verbosity
 
   def asString[T] = new JsonWriter[T] {

@@ -1,4 +1,4 @@
-package com.quantifind.charts.repl
+package wisp.server
 
 import unfiltered.request._
 import unfiltered.response._

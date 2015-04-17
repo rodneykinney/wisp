@@ -1,8 +1,8 @@
-package allenai.highcharts
+package wisp.highcharts
 
 import java.awt.Color
 
-import allenai._
+import wisp._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 /**
@@ -177,42 +177,5 @@ object SeriesType {
   case object spline extends SeriesType
 }
 
-
-object AllFormats {
-  import allenai.{HighchartElementJsonFormat => js}
-  implicit def writerToFormat[T](writer: JsonWriter[T]) = new JsonFormat[T] {
-    override def write(obj: T): JsValue = writer.write(obj)
-
-    override def read(json: JsValue): T = ???
-  }
-
-  implicit val color =
-    new JsonWriter[Color] {
-      def write(c: Color) = "#%02x%02x%02x".format(c.getRed, c.getGreen, c.getBlue).toJson
-    }
-  implicit val chart: JsonFormat[Chart] = js(Chart)
-  implicit val align: JsonFormat[Align] = js.asString[Align]
-  implicit val title: JsonFormat[Title] = js(Title)
-  implicit val axisTitle: JsonFormat[AxisTitle] = js(AxisTitle)
-  implicit val axisType: JsonFormat[AxisType] = js.asString[AxisType]
-  implicit val axis: JsonFormat[Axis] = js(Axis)
-  implicit val exporting: JsonFormat[Exporting] = js(Exporting)
-  implicit val legend: JsonFormat[Legend] = js(Legend)
-  implicit val dataLabels: JsonFormat[DataLabels] = js(DataLabels)
-  implicit val richPoint: JsonFormat[RichPoint] = js(RichPoint)
-  implicit val stacking: JsonFormat[Stacking] = js.asString[Stacking]
-  implicit val plotSettings: JsonFormat[PlotSettings] = js(PlotSettings)
-  implicit val plotOptions: JsonFormat[PlotOptions] = js(PlotOptions)
-  implicit val data: JsonFormat[Point] = new JsonWriter[Point] {
-    def write(obj: Point) = obj match {
-      case n: XYValue => (n.x, n.y).toJson
-      case n: YValue => n.value.toJson
-      case p: RichPoint => richPoint.write(p)
-    }
-  }
-  implicit val seriesType: JsonFormat[SeriesType] = js.asString[SeriesType]
-  implicit val series: JsonFormat[Series] = js(Series)
-  implicit val highchartData: JsonFormat[HighchartAPI] = js(HighchartAPI)
-}
 
 

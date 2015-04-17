@@ -1,6 +1,4 @@
-package com.quantifind.charts.repl
-
-import allenai.highcharts.{YValue, XYValue, RichPoint, Point}
+package wisp.highcharts
 
 import scala.language.implicitConversions
 
@@ -17,7 +15,7 @@ trait SeriesData {
   def points: Seq[Point]
 }
 
-trait IterablePairConversions {
+trait SeriesDataConversions {
   implicit class DataFromStringAndIterable[B <% Double](ab: (Iterable[B], Iterable[String]))
       extends SeriesData {
     def points = ab._2.zip(ab._1).map { case (l, y) => RichPoint(y = Some(y.toDouble), x = None, name = l) }.toSeq

@@ -1,7 +1,7 @@
 import java.awt.Color
 
-import allenai._
-import allenai.highcharts._
+import wisp._
+import wisp.highcharts._
 
 object Scratch {
 

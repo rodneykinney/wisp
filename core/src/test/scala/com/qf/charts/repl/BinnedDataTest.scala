@@ -1,9 +1,10 @@
 package com.qf.charts.repl
 
-import com.quantifind.charts.repl.BinnedData
-import com.quantifind.charts.repl.BinnedData._
+import wisp.BinnedData
+import BinnedData._
 import org.scalatest.Matchers
 import org.scalatest.FunSuite
+import wisp.BinnedData
 
 /**
  * User: austin

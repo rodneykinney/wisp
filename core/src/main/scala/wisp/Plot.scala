@@ -1,12 +1,11 @@
-package allenai
+package wisp
 
-import allenai.highcharts._
-import com.quantifind.charts.repl._
+import wisp.highcharts._
 
 /**
  * Created by rodneykinney on 4/14/15.
  */
-object Plot extends WebPlotter with IterablePairConversions {
+object Plot extends WebPlotter with SeriesDataConversions {
   implicit val plotter = this
 
   private def hc(data: SeriesData, st: SeriesType) =

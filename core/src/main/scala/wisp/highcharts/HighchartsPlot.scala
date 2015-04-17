@@ -1,7 +1,6 @@
-package allenai.highcharts
+package wisp.highcharts
 
-import allenai.Plotter
-import com.quantifind.charts.repl.SeriesData
+import wisp.Plotter
 
 /**
  * Created by rodneykinney on 4/14/15.

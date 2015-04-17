@@ -1,14 +1,14 @@
-package allenai
+package wisp
 
 import java.io.{File, PrintWriter}
 
-import allenai.highcharts.AllFormats._
-import allenai.highcharts.HighchartAPI
-import com.quantifind.charts.repl.PlotServer
+import wisp.highcharts.HighchartsJson._
+import wisp.highcharts.HighchartAPI
 import org.apache.commons.io.FileUtils
 import spray.json._
 import unfiltered.jetty.Server
 import unfiltered.util.Port
+import wisp.server.PlotServer
 
 import scala.concurrent.Promise
 import scala.util.{Failure, Random, Try}
