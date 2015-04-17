@@ -5,6 +5,9 @@ import java.awt.Color
 import wisp._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
+
+import scala.annotation.StaticAnnotation
+
 /**
  * Created by rodneykinney on 4/15/15.
  */
@@ -20,6 +23,10 @@ case class HighchartAPI(
     yAxis: IndexedSeq[Axis] = Vector(Axis()),
     other: Map[String, JsValue] = Map())
     extends HighchartElement {
+  def update[T](update: HighchartAPI => T) = new API {
+    @help("size, borders, margins, etc.")
+    def layout = chart.update(c => update(copy(chart = c)))
+  }
 }
 
 case class Chart(
@@ -27,21 +34,18 @@ case class Chart(
     height: Int = 500,
     borderWidth: Int = 2,
     borderColor: Color = null,
-    zoomType: String = "xy",
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
   def update[T](update: Chart => T) = new {
-    def width(x: Int) = update(copy(width = x))
-    def height(x: Int) = update(copy(height = x))
+    def size(w: Int, h: Int) = update(copy(width = w, height = h))
     def borderWidth(x: Int) = update(copy(borderWidth = x))
     def borderColor(x: Color) = update(copy(borderColor = x))
-    def zoomType(x: String) = update(copy(zoomType = x))
   }
 }
 
 case class Exporting(enabled: Boolean = true,
     other: Map[String, JsValue] = Map()) extends HighchartElement {
-  def update[T](update: Exporting => T) = new {
+  def update[T](update: Exporting => T) = new API {
     def enabled(x: Boolean) = update(copy(enabled = x))
   }
 }
@@ -78,8 +82,8 @@ case class Series(
     `type`: SeriesType,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def update[T](update: Series => T) = new {
-    def name(s: String) = update(copy(name=s))
+  def update[T](update: Series => T) = new API {
+    def name(s: String) = update(copy(name = s))
   }
 }
 
@@ -105,9 +109,9 @@ case class Title(
     align: Align = Align.center,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def update[T](update: Title => T) = new {
+  def update[T](update: Title => T) = new API {
     def text(x: String) = update(copy(text = x))
-    def align(x: Align) = update(copy(align=x))
+    def align(x: Align) = update(copy(align = x))
   }
 
 }
@@ -122,21 +126,37 @@ case class Axis(
   def update[T](update: Axis => T) = new AxisAPI(this)(update)
 }
 
-class AxisAPI[T](axis:Axis)(update: Axis => T) {
+class AxisAPI[T](axis: Axis)(update: Axis => T) extends API {
   def axisType(x: AxisType) = update(axis.copy(`type` = x))
   def title = axis.title.update(t => update(axis.copy(title = t)))
-  def categories(x: Iterable[String])= update(axis.copy(categories = x.toIndexedSeq))
-  def min(min: Double) = update(axis.copy(min = Some(min)))
-  def max(max: Double) = update(axis.copy(max = Some(max)))
+  def categories(x: Iterable[String]) = update(axis.copy(categories = x.toIndexedSeq))
+  def range(min: Double, max: Double) = update(axis.copy(min = Some(min), max = Some(max)))
 }
 
 case class AxisTitle(text: String = "",
     other: Map[String, JsValue] = Map()) extends HighchartElement {
-  def update[T](update: AxisTitle => T) = new {
+  def update[T](update: AxisTitle => T) = new API {
     def text(x: String) = update(copy(text = x))
   }
 }
 
+class help(msg: String) extends StaticAnnotation
+
+trait API {
+  def help = {
+    for {
+      m <- this.getClass.getDeclaredMethods
+      method = m.getName
+      if (method.indexOf('$') < 0 && method != "help")
+    } {
+      val params = m.getParameterTypes.map(_.getSimpleName) match {
+        case Array() => ""
+        case a => a.mkString("(",",",")")
+      }
+      println(s"${m.getName}$params")
+    }
+  }
+}
 
 trait HighchartElement extends Product {
   val other: Map[String, JsValue]

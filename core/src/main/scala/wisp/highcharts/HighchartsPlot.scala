@@ -27,7 +27,8 @@ trait BasePlot[T <: BasePlot[T]] {
 
   def series(idx: Int) = data.series(idx).update(s => update(data.copy(series = data.series.updated(idx, s))))
 
-  def layout = api.chart.update(c => update(data.copy(chart = c)))
+  def layout = api.update(update).layout
+  def help = api.update(update).help
 
   def exporting = api.exporting.update(e => update(data.copy(exporting = e)))
 }
