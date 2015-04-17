@@ -12,24 +12,19 @@ import HighchartsJson._
 class HighchartsWebPlotter extends WebPlotter[HighchartAPI, HighchartAPI] {
   def idFor(plot: HighchartAPI) = plot
   def renderPlot(hc: HighchartAPI) = {
-    val hash = hc.hashCode()
-    val containerId = Random.nextInt(1e10.toInt) + (if (hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
     val json = hc.toJson.toString
+    val containerId = json.hashCode.toHexString
     s"""
-       | <div id="container%s"></div>
-    """.stripMargin.format(containerId) + "\n" +
-        """
+          | <div id="container$containerId"></div>
           |    <script type="text/javascript">
-          |        $(function() {
-          |            $('#container%s').highcharts(
-        """.stripMargin.format(containerId) +
-        """
-          |                %s
+          |        $$(function() {
+          |            $$('#container$containerId').highcharts(
+          |                $json
           |            );
           |        });
           |    </script>
           |
-        """.stripMargin.format(json)
+        """.stripMargin
   }
 
 }

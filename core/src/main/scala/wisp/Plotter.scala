@@ -31,27 +31,24 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
 
   def addPlot(plot: T) = {
     plots = plots :+ plot
-    refresh()
     val id = idFor(plot)
     indexFor(id) = plots.size - 1
+    refresh()
     id
   }
 
   def updatePlot(id: TRef, newPlot: T) = {
     val idx = indexFor.remove(id).get
     plots = plots.updated(idx, newPlot)
-    refresh()
     val newId = idFor(newPlot)
     indexFor(newId) = idx
+    refresh()
     newId
   }
 
-  private var serverRootFileName = s"index-${System.currentTimeMillis()}.html"
   private var port = Port.any
   private var serverMode = false
   private var firstOpenWindow = false
-
-  private var serverRootFile = new File(serverRootFileName)
 
   var http: Option[Server] = None
   var plotServer: Option[PlotServer] = None
@@ -62,19 +59,8 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
    *
    * @return
    */
-  def getWispServerInfo(): (File, Int, Boolean) = {
-    (serverRootFile, port, serverMode)
-  }
-
-  def setWispServerFile(filename: String): Unit = {
-    stopWispServer
-    this.serverRootFileName = filename
-    this.serverRootFile = new File(serverRootFileName)
-    startWispServer()
-  }
-
-  def setWispServerFile(file: File): Unit = {
-    setWispServerFile(file.getAbsolutePath())
+  def getWispServerInfo(): (Int, Boolean) = {
+    (port, serverMode)
   }
 
   def setWispPort(port: Int): Unit = {
@@ -119,11 +105,11 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
    * Assigns a random port
    * @param message
    */
-  def startWispServer(message: String = s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}/${serverRootFileName}") {
+  def startWispServer(message: String = s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}/") {
     if (!serverMode) {
       serverMode = true
       val ps = new PlotServer
-      val args = UnfilteredWebApp.Arguments(altRoot = Some(serverRootFile.getAbsolutePath), port = port)
+      val args = UnfilteredWebApp.Arguments(altRoot = None, port = port)
       val server = ps.get(args)
       server.start
       println("Server started: " + message)
@@ -138,10 +124,9 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
    */
   def stopWispServer {
     if (serverMode) {
-      serverRootFile.delete()
       // satisfy the promise, to avoid exception on close
       // TODO handle failure in the PlotServer
-      plotServer.map(_.p.success(()))
+      plotServer.map(_.refresh("Shutting down...",""))
       http.map(_.stop)
       http.map(_.destroy)
       serverMode = false
@@ -168,36 +153,28 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
 
   def refresh(): Unit = {
 
-    val fileContents = buildHtmlFile()
+    val contentWithPlaceholder = buildHtmlFile()
+    val contentHash = contentWithPlaceholder.hashCode.toHexString
+    val actualContent = contentWithPlaceholder.replaceAllLiterally("HASH_PLACEHOLDER", contentHash)
 
-    val temp = File.createTempFile("highcharts", ".html")
-    val pw = new PrintWriter(temp)
-    pw.print(fileContents)
-    pw.flush()
-    pw.close()
+    plotServer.map(_.refresh(actualContent,contentHash))
 
-    plotServer.foreach { ps =>
-      ps.p.success(())
-      ps.p = Promise[Unit]()
-    }
+    val (port, serverMode) = getWispServerInfo()
 
-    val (serverRootFile, port, serverMode) = getWispServerInfo()
-
-    lazy val link =
-      if (serverMode) {
-        FileUtils.deleteQuietly(serverRootFile)
-        FileUtils.moveFile(temp, serverRootFile)
-        s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}"
-      } else s"file://$temp"
-
-    openFirstWindow(link)
-
-    println(s"Output written to $link (CMD + Click link in Mac OSX).")
+    openFirstWindow(s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}")
   }
 
   def reloadJs =
     """
-      |<script type="text/javascript">$.ajax({url: '/check', dataType: 'jsonp', complete: function(){location.reload()}})</script>
+      |<script type="text/javascript">
+      |var contentHash = 'HASH_PLACEHOLDER';
+      |$.ajax({
+      |  url: '/check',
+      |  data: {'clientContentHash' : [contentHash]},
+      |  success: function(result) {
+      |    location.reload();
+      |  }})
+      |</script>
     """.stripMargin
 
   val wispJsImports: String =

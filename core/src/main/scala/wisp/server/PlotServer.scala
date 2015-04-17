@@ -12,25 +12,33 @@ import scala.concurrent.{Await, Promise}
  *
  * An unfiltered web-app for displaying graphs
  */
-class PlotServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments]  {
+class PlotServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
   // this is fulfilled by the plot command, to allow a browser to wait for plot to reload
-  var p = Promise[Unit]()
+  private var p = Promise[Unit]()
+  private var content = "Initializing..."
+  private var contentHash = ""
+  def refresh(newContent: String, newContentHash: String) = {
+    content = newContent
+    contentHash = newContentHash
+    p.success()
+    p = Promise[Unit]()
+  }
 
   private class WebApp extends unfiltered.filter.Plan {
     def intent = {
       // handle jsonp
-      case req @ GET(Path(Seg("check" :: Nil)) & Params(params)) =>
+      case req@GET(Path(Seg("check" :: Nil)) & Params(params)) =>
+        val clientContentHash = params.values.headOption.map(_.headOption).flatten
         implicit val responder = req
-        val str = """[]"""
-        val response = params.get("callback") match {
-          case Some(v) =>
-            val callbackName = v.head
-            s"$callbackName($str)"
-          case _ => str
-        }
+        val response = s""""$contentHash""""
         // block for plot command to fulfill promise, and release this result to trigger browser reload
-        Await.result(p.future, Duration.Inf)
+        if (clientContentHash.forall(_ == contentHash)) {
+          Await.result(p.future, Duration.Inf)
+        }
         JsonContent ~> ResponseString(response)
+      case req@GET(Path(Seg(Nil)) & Params(params)) =>
+        implicit val responder = req
+        HtmlContent ~> ResponseString(content)
       case _ => Pass
     }
   }
