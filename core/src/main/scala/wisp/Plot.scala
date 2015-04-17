@@ -13,7 +13,7 @@ object Plot extends HighchartsHtmlPlotter with SeriesDataConversions {
 
   def line(data: SeriesData) = new LinePlot(hc(data, SeriesType.line), plotter)
 
-  def area(data: SeriesData) = new LinePlot(hc(data, SeriesType.area), plotter)
+  def area(data: SeriesData) = new AreaPlot(hc(data, SeriesType.area), plotter)
 
   def areaSpline(data: SeriesData) = new LinePlot(hc(data, SeriesType.areaspline), plotter)
 

@@ -35,6 +35,12 @@ trait BasePlot[T <: BasePlot[T]] {
 class LinePlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
     extends BasePlot[LinePlot] with HasLegend[LinePlot] with HasXYAxis[LinePlot]
 
+class AreaPlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
+    extends BasePlot[AreaPlot] with HasLegend[AreaPlot] with HasXYAxis[AreaPlot] with HasStacking[AreaPlot] {
+  override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
+    o.copy(area = f(o.area))
+}
+
 class BarPlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
     extends BasePlot[BarPlot] with HasLegend[BarPlot] with HasXYAxis[BarPlot] with HasStacking[BarPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
