@@ -5,8 +5,8 @@ import wisp.highcharts._
 /**
  * Created by rodneykinney on 4/14/15.
  */
-object Plot extends WebPlotter with SeriesDataConversions {
-  implicit val plotter = this
+object Plot extends SeriesDataConversions {
+  implicit val plotter = new HighchartsWebPlotter
 
   private def hc(data: SeriesData, st: SeriesType) =
     HighchartAPI(series = Vector(Series(data.points, `type` = st)))

@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils
 import spray.json._
 import unfiltered.jetty.Server
 import unfiltered.util.Port
-import wisp.server.PlotServer
+import wisp.server.{UnfilteredWebApp, PlotServer}
 
 import scala.concurrent.Promise
 import scala.util.{Failure, Random, Try}
@@ -22,22 +22,28 @@ trait Plotter[T, TRef] {
   def plots: Seq[T]
 }
 
-class WebPlotter extends Plotter[HighchartAPI, HighchartAPI] {
+abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
+  def idFor(plot: T): TRef
+  def renderPlot(plot: T): String
 
-  var plots = Vector[HighchartAPI]()
+  var plots = Vector[T]()
+  private val indexFor = collection.mutable.Map.empty[TRef, Int]
 
-  def addPlot(plot: HighchartAPI) = {
+  def addPlot(plot: T) = {
     plots = plots :+ plot
     refresh()
-    plot
+    val id = idFor(plot)
+    indexFor(id) = plots.size - 1
+    id
   }
 
-  def updatePlot(id: HighchartAPI, newPlot: HighchartAPI) = {
-    val idx = plots.indexOf(id)
-    require(idx >= 0, "Attempt to update non-existing plot")
+  def updatePlot(id: TRef, newPlot: T) = {
+    val idx = indexFor.remove(id).get
     plots = plots.updated(idx, newPlot)
     refresh()
-    newPlot
+    val newId = idFor(newPlot)
+    indexFor(newId) = idx
+    newId
   }
 
   private var serverRootFileName = s"index-${System.currentTimeMillis()}.html"
@@ -117,7 +123,7 @@ class WebPlotter extends Plotter[HighchartAPI, HighchartAPI] {
     if (!serverMode) {
       serverMode = true
       val ps = new PlotServer
-      val args = ps.parseArgs(Array("--altRoot", serverRootFile.getAbsolutePath, "--port", port.toString))
+      val args = UnfilteredWebApp.Arguments(altRoot = Some(serverRootFile.getAbsolutePath), port = port)
       val server = ps.get(args)
       server.start
       println("Server started: " + message)
@@ -153,7 +159,7 @@ class WebPlotter extends Plotter[HighchartAPI, HighchartAPI] {
     sb.append(reloadJs)
     sb.append("</head>")
     sb.append("<body>")
-    plots.map(highchartsContainer).foreach(sb.append)
+    plots.map(renderPlot).foreach(sb.append)
     sb.append("</body>")
     sb.append("</html>")
 
@@ -214,30 +220,6 @@ class WebPlotter extends Plotter[HighchartAPI, HighchartAPI] {
     """.stripMargin +
         wispJsImports
 
-  def highchartsContainer(hc: HighchartAPI): String = {
-    val hash = hc.hashCode()
-    val containerId = Random.nextInt(1e10.toInt) + (if (hash < 0) -1 else 1) * hash // salt the hash to allow duplicates
-    highchartsContainer(hc.toJson.toString, containerId)
-  }
 
-  def highchartsContainer(json: String, index: Int): String =
-    containerDivs(index) + "\n" +
-        """
-          |    <script type="text/javascript">
-          |        $(function() {
-          |            $('#container%s').highcharts(
-        """.stripMargin.format(index.toString) +
-        """
-          |                %s
-          |            );
-          |        });
-          |    </script>
-          |
-        """.stripMargin.format(json)
-
-  def containerDivs(index: Int) =
-    s"""
-       |   <div id="container%s"></div>
-    """.stripMargin.format(index.toString)
 }
 

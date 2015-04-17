@@ -1,6 +1,5 @@
 package wisp.server
 
-import com.quantifind.sumac.{ArgMain, FieldArgs}
 import unfiltered.util.Port
 
 /**
@@ -9,7 +8,7 @@ import unfiltered.util.Port
  * User: pierre
  * Date: 10/3/13
  */
-trait UnfilteredWebApp[T <: UnfilteredWebApp.Arguments] extends ArgMain[T] {
+trait UnfilteredWebApp[T <: UnfilteredWebApp.Arguments] {
 
   def htmlRoot: String
 
@@ -20,28 +19,23 @@ trait UnfilteredWebApp[T <: UnfilteredWebApp.Arguments] extends ArgMain[T] {
       case Some(path) => new java.io.File(path).toURI.toURL
       case _ => getClass.getResource(htmlRoot)
     }
-//    implicit val conf = ConfigFactory.load()
+    //    implicit val conf = ConfigFactory.load()
     println("serving resources from: " + root)
     val server = unfiltered.jetty.Server.http(parsed.port)
-      .resources(root) //whatever is not matched by our filter will be served from the resources folder (html, css, ...)
-      .plan(setup(parsed))
+        .resources(root) //whatever is not matched by our filter will be served from the resources folder (html, css, ...)
+        .plan(setup(parsed))
     val connector = server.underlying.getConnectors.head
     connector.setRequestHeaderSize(parsed.headerSize)
     server
-  }
-
-  override def main(parsed: T) {
-    get(parsed).run()
   }
 
 }
 
 object UnfilteredWebApp {
 
-  trait Arguments extends FieldArgs {
-    var headerSize: Int = (2 * 10e6).toInt // 2 megabytes
-    var port = Port.any
-    var altRoot: Option[String] = None
-  }
+  case class Arguments(
+      headerSize: Int = (2 * 10e6).toInt, // 2 megabytes
+      port: Int = Port.any,
+      altRoot: Option[String] = None)
 
 }

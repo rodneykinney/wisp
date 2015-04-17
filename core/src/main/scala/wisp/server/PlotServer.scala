@@ -35,12 +35,6 @@ class PlotServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments]  {
     }
   }
 
-  def parseArgs(args: Array[String]) = {
-    val parsed = new UnfilteredWebApp.Arguments{}
-    parsed.parse(args)
-    parsed
-  }
-
   def setup(parsed: UnfilteredWebApp.Arguments): unfiltered.filter.Plan = {
     new WebApp
   }
