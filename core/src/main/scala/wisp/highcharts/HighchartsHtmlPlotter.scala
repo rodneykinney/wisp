@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import wisp.WebPlotter
+import wisp.HtmlPlotter
 
 import scala.util.Random
 import spray.json._
@@ -9,7 +9,7 @@ import HighchartsJson._
 /**
  * Created by rodneykinney on 4/16/15.
  */
-class HighchartsWebPlotter extends WebPlotter[HighchartAPI, HighchartAPI] {
+class HighchartsHtmlPlotter extends HtmlPlotter[HighchartAPI, HighchartAPI] {
   def idFor(plot: HighchartAPI) = plot
   def renderPlot(hc: HighchartAPI) = {
     val json = hc.toJson.toString

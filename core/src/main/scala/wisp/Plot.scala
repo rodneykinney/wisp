@@ -6,7 +6,7 @@ import wisp.highcharts._
  * Created by rodneykinney on 4/14/15.
  */
 object Plot extends SeriesDataConversions {
-  implicit val plotter = new HighchartsWebPlotter
+  implicit val plotter = new HighchartsHtmlPlotter
 
   private def hc(data: SeriesData, st: SeriesType) =
     HighchartAPI(series = Vector(Series(data.points, `type` = st)))

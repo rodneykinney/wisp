@@ -19,31 +19,56 @@ import scala.util.{Failure, Random, Try}
 trait Plotter[T, TRef] {
   def addPlot(plot: T): TRef
   def updatePlot(id: TRef, newPlot: T): TRef
+  def removePlot(id: TRef): TRef
   def plots: Seq[T]
 }
 
-abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
+case class PlotsHolder[T, TRef](plotsWithId: Vector[(TRef, T)] = Vector()) {
+  def add(id: TRef, plot: T) =
+    PlotsHolder(plotsWithId :+(id, plot))
+
+  def update(id: TRef, newId: TRef, newPlot: T) = {
+    val idx = plotsWithId.zipWithIndex.find { case ((elementId, e), idx) => elementId == id }.map(_._2)
+    idx match {
+      case Some(i) =>
+        PlotsHolder(plotsWithId.updated(i, (newId, newPlot)))
+      case None =>
+        this
+    }
+  }
+
+  def remove(id: TRef) = {
+    PlotsHolder(plotsWithId.filterNot(id == _._1))
+  }
+
+  def plots = plotsWithId.map(_._2)
+}
+
+abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
   def idFor(plot: T): TRef
   def renderPlot(plot: T): String
 
-  var plots = Vector[T]()
-  private val indexFor = collection.mutable.Map.empty[TRef, Int]
+  private var holder = new PlotsHolder[T, TRef]
+  def plots = holder.plots
 
   def addPlot(plot: T) = {
-    plots = plots :+ plot
     val id = idFor(plot)
-    indexFor(id) = plots.size - 1
+    holder = holder.add(id, plot)
     refresh()
     id
   }
 
   def updatePlot(id: TRef, newPlot: T) = {
-    val idx = indexFor.remove(id).get
-    plots = plots.updated(idx, newPlot)
     val newId = idFor(newPlot)
-    indexFor(newId) = idx
+    holder = holder.update(id, newId, newPlot)
     refresh()
     newId
+  }
+
+  def removePlot(id: TRef) = {
+    holder = holder.remove(id)
+    refresh()
+    id
   }
 
   private var port = Port.any
@@ -126,7 +151,7 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
     if (serverMode) {
       // satisfy the promise, to avoid exception on close
       // TODO handle failure in the PlotServer
-      plotServer.map(_.refresh("Shutting down...",""))
+      plotServer.map(_.refresh("Shutting down...", ""))
       http.map(_.stop)
       http.map(_.destroy)
       serverMode = false
@@ -157,7 +182,7 @@ abstract class WebPlotter[T, TRef] extends Plotter[T, TRef] {
     val contentHash = contentWithPlaceholder.hashCode.toHexString
     val actualContent = contentWithPlaceholder.replaceAllLiterally("HASH_PLACEHOLDER", contentHash)
 
-    plotServer.map(_.refresh(actualContent,contentHash))
+    plotServer.map(_.refresh(actualContent, contentHash))
 
     val (port, serverMode) = getWispServerInfo()
 

@@ -18,6 +18,8 @@ trait BasePlot[T <: BasePlot[T]] {
     this.asInstanceOf[T]
   }
 
+  def remove() = plotter.removePlot(data)
+
   def title = api.title.update(t => update(data.copy(title = t)))
 
   def addSeries(xyData: SeriesData) =
