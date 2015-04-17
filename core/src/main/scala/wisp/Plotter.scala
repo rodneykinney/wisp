@@ -48,27 +48,39 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
   def idFor(plot: T): TRef
   def renderPlot(plot: T): String
 
-  private var holder = new PlotsHolder[T, TRef]
+  private val undoRedo = new UndoRedo[PlotsHolder[T, TRef]]
+  undoRedo.push(PlotsHolder[T, TRef]())
+  private def holder = undoRedo.head.getOrElse(PlotsHolder[T, TRef]())
   def plots = holder.plots
 
   def addPlot(plot: T) = {
     val id = idFor(plot)
-    holder = holder.add(id, plot)
+    undoRedo.push(holder.add(id, plot))
     refresh()
     id
   }
 
   def updatePlot(id: TRef, newPlot: T) = {
     val newId = idFor(newPlot)
-    holder = holder.update(id, newId, newPlot)
+    undoRedo.push(holder.update(id, newId, newPlot))
     refresh()
     newId
   }
 
   def removePlot(id: TRef) = {
-    holder = holder.remove(id)
+    undoRedo.push(holder.remove(id))
     refresh()
     id
+  }
+
+  def undo() = {
+    undoRedo.undo()
+    refresh()
+  }
+
+  def redo() = {
+    undoRedo.redo()
+    refresh()
   }
 
   private var port = Port.any

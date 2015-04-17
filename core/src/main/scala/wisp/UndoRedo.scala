@@ -11,7 +11,7 @@ class UndoRedo[T] {
 
   def head: Option[T] = undoStack.headOption
 
-  def push(element: T) = ???
+  def push(element: T) = undoStack.push(element)
 
   def undo() = {
     if (undoStack.nonEmpty) {
