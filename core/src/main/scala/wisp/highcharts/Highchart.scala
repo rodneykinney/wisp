@@ -12,7 +12,7 @@ import scala.annotation.StaticAnnotation
 /**
  * Created by rodneykinney on 4/15/15.
  */
-case class HighchartAPI(
+case class Highchart(
     chart: Chart = Chart(),
     exporting: Exporting = Exporting(),
     legend: Legend = Legend(),
@@ -24,22 +24,22 @@ case class HighchartAPI(
     yAxis: IndexedSeq[Axis] = Vector(Axis()),
     other: Map[String, JsValue] = Map())
     extends HighchartElement {
-  def update[T](update: HighchartAPI => T) = new API {
+  def api[T](update: Highchart => T) = new API {
     @WebMethod(action = "Size, borders, margins, etc.")
-    def layout = chart.update(c => update(copy(chart = c)))
+    def layout = chart.api(c => update(copy(chart = c)))
     @WebMethod(action = "Export to png, pdf, etc.")
-    def exporting = HighchartAPI.this.exporting.update(e => update(copy(exporting = e)))
+    def exporting = Highchart.this.exporting.api(e => update(copy(exporting = e)))
     @WebMethod(action = "Series data attributes")
-    def series(idx: Int) = HighchartAPI.this.series(idx).update(s => update(copy(series = HighchartAPI.this.series.updated(idx, s))))
+    def series(idx: Int) = Highchart.this.series(idx).api(s => update(copy(series = Highchart.this.series.updated(idx, s))))
     @WebMethod(action = "Add new data series")
     def addSeries(xyData: SeriesData) = update {
-      val oldSeries = HighchartAPI.this.series
+      val oldSeries = Highchart.this.series
       val seriesType = if (oldSeries.size > 0) oldSeries(0).`type` else SeriesType.line
-      HighchartAPI.this.copy(series =
+      Highchart.this.copy(series =
           oldSeries :+ Series(data = xyData.points, `type` = seriesType))
     }
     @WebMethod(action = "Title options")
-    def title = HighchartAPI.this.title.update(t => update(HighchartAPI.this.copy(title = t)))
+    def title = Highchart.this.title.api(t => update(Highchart.this.copy(title = t)))
   }
 }
 
@@ -48,18 +48,39 @@ case class Chart(
     height: Int = 500,
     borderWidth: Int = 2,
     borderColor: Color = null,
+    backgroundColor: Color = null,
+    borderRadius: Option[Int] = None,
+    margin: Option[(Int, Int, Int, Int)] = None,
+    plotBackgroundColor: Color = null,
+    plotBorderColor: Color = null,
+    plotBorderWidth: Option[Int] = None,
+    plotShadow: Option[Boolean] = None,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def update[T](update: Chart => T) = new {
+  def api[T](update: Chart => T) = new {
     def size(w: Int, h: Int) = update(copy(width = w, height = h))
-    def borderWidth(x: Int) = update(copy(borderWidth = x))
     def borderColor(x: Color) = update(copy(borderColor = x))
+    def backgroundColor(x: Color) = update(copy(backgroundColor = x))
+    @WebMethod(action="Corner radius for chart border")
+    def borderRadius(x: Int) = update(copy(borderRadius = Some(x)))
+    @WebMethod(action="Pixel width of chart border")
+    def borderWidth(x: Int) = update(copy(borderWidth = x))
+    @WebMethod(action="Outer margin: top, right, bottom, left")
+    def margin(top: Int, right: Int, bottom: Int, left: Int) = update(copy(margin = Some((top, right, bottom, left))))
+    @WebMethod(action="Background color of the plot area")
+    def plotBackgroundColor(x: Color) = update(copy(plotBackgroundColor = x))
+    @WebMethod(action="Color of the plot area")
+    def plotBorderColor(x: Color) = update(copy(plotBorderColor = x))
+    @WebMethod(action="Pixel width of plot area border")
+    def plotBorderWidth(x: Int) = update(copy(plotBorderWidth = Some(x)))
+    @WebMethod(action="Pixel width of plot area border")
+    def plotShadow(x: Boolean) = update(copy(plotShadow = Some(x)))
   }
 }
 
 case class Exporting(enabled: Boolean = true,
     other: Map[String, JsValue] = Map()) extends HighchartElement {
-  def update[T](update: Exporting => T) = new API {
+  def api[T](update: Exporting => T) = new API {
     def enabled(x: Boolean) = update(copy(enabled = x))
   }
 }
@@ -96,7 +117,7 @@ case class Series(
     `type`: SeriesType,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def update[T](update: Series => T) = new API {
+  def api[T](update: Series => T) = new API {
     def name(s: String) = update(copy(name = s))
   }
 }
@@ -123,8 +144,9 @@ case class Title(
     align: Align = Align.center,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def update[T](update: Title => T) = new API {
+  def api[T](update: Title => T) = new API {
     def text(x: String) = update(copy(text = x))
+    @WebMethod(action="Align.[left|right|center]")
     def align(x: Align) = update(copy(align = x))
   }
 
@@ -174,41 +196,4 @@ trait API {
 trait HighchartElement extends Product {
   val other: Map[String, JsValue]
 }
-
-trait EnumTrait {
-  override def toString = this.getClass.getSimpleName.stripSuffix("$")
-}
-
-sealed trait Align extends EnumTrait
-
-object Align {
-  case object left extends Align
-  case object center extends Align
-  case object right extends Align
-}
-
-sealed trait AxisType extends EnumTrait
-
-object AxisType {
-  case object category extends AxisType
-  case object datetime extends AxisType
-  case object linear extends AxisType
-  case object logarithmic extends AxisType
-}
-
-sealed trait SeriesType extends EnumTrait
-
-object SeriesType {
-  case object area extends SeriesType
-  case object areaspline extends SeriesType
-  case object bar extends SeriesType
-  case object boxplot extends SeriesType
-  case object column extends SeriesType
-  case object line extends SeriesType
-  case object pie extends SeriesType
-  case object scatter extends SeriesType
-  case object spline extends SeriesType
-}
-
-
 
