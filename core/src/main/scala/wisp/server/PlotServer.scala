@@ -33,7 +33,12 @@ class PlotServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
         val response = s""""$contentHash""""
         // block for plot command to fulfill promise, and release this result to trigger browser reload
         if (clientContentHash.forall(_ == contentHash)) {
-          Await.result(p.future, Duration.Inf)
+          try {
+            Await.result(p.future, Duration.Inf)
+          }
+          catch {
+            case ex: InterruptedException => () // Shutdown
+          }
         }
         JsonContent ~> ResponseString(response)
       case req@GET(Path(Seg(Nil)) & Params(params)) =>

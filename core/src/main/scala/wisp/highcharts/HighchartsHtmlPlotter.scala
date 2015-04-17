@@ -9,9 +9,9 @@ import HighchartsJson._
 /**
  * Created by rodneykinney on 4/16/15.
  */
-class HighchartsHtmlPlotter extends HtmlPlotter[HighchartAPI, HighchartAPI] {
-  def idFor(plot: HighchartAPI) = plot
-  def renderPlot(hc: HighchartAPI) = {
+class HighchartsHtmlPlotter extends HtmlPlotter[Highchart, Highchart] {
+  def idFor(plot: Highchart) = plot
+  def renderPlot(hc: Highchart) = {
     val json = hc.toJson.toString
     val containerId = json.hashCode.toHexString
     s"""

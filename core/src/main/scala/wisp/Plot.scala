@@ -9,7 +9,7 @@ object Plot extends HighchartsHtmlPlotter with SeriesDataConversions {
   implicit val plotter = this
 
   private def hc(data: SeriesData, st: SeriesType) =
-    HighchartAPI(series = Vector(Series(data.points, `type` = st)))
+    Highchart(series = Vector(Series(data.points, `type` = st)))
 
   def line(data: SeriesData) = new LinePlot(hc(data, SeriesType.line), plotter)
 

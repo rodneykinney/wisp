@@ -3,7 +3,7 @@ package wisp
 import java.io.{File, PrintWriter}
 
 import wisp.highcharts.HighchartsJson._
-import wisp.highcharts.HighchartAPI
+import wisp.highcharts.Highchart
 import org.apache.commons.io.FileUtils
 import spray.json._
 import unfiltered.jetty.Server
@@ -166,8 +166,6 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
    */
   def stopWispServer {
     if (serverMode) {
-      // satisfy the promise, to avoid exception on close
-      // TODO handle failure in the PlotServer
       plotServer.map(_.refresh("Shutting down...", ""))
       http.map(_.stop)
       http.map(_.destroy)

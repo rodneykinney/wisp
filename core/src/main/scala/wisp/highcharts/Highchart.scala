@@ -14,19 +14,23 @@ import scala.annotation.StaticAnnotation
  */
 case class Highchart(
     chart: Chart = Chart(),
+    colors: Seq[Color] = null,
     exporting: Exporting = Exporting(),
     legend: Legend = Legend(),
     series: IndexedSeq[Series] = Vector(),
-    subtitle: Title = null,
+    subtitle: ChartTitle = null,
     plotOptions: PlotOptions = null,
-    title: Title = Title(),
+    title: ChartTitle = ChartTitle(),
+    labels: FloatingLabels = null,
     xAxis: IndexedSeq[Axis] = Vector(Axis()),
     yAxis: IndexedSeq[Axis] = Vector(Axis()),
-    other: Map[String, JsValue] = Map())
+    other: Map[String, JsValue] = Map("credits" -> Map("enabled" -> "false").toJson))
     extends HighchartElement {
   def api[T](update: Highchart => T) = new API {
     @WebMethod(action = "Size, borders, margins, etc.")
     def layout = chart.api(c => update(copy(chart = c)))
+    @WebMethod(action = "Legend layout")
+    def legend = Highchart.this.legend.api(c => update(copy(legend = c)))
     @WebMethod(action = "Export to png, pdf, etc.")
     def exporting = Highchart.this.exporting.api(e => update(copy(exporting = e)))
     @WebMethod(action = "Series data attributes")
@@ -40,8 +44,21 @@ case class Highchart(
     }
     @WebMethod(action = "Title options")
     def title = Highchart.this.title.api(t => update(Highchart.this.copy(title = t)))
+    @WebMethod(action = "Default colors for data series")
+    def colors(x: Seq[Color]) = update(copy(colors = x))
+    @WebMethod(action = "Add Text Label at (x,y) with CSS style")
+    def addFloatingLabel(x: Int, y: Int, text: String, style: Map[String, String] = Map()) = {
+      val oldLabels = Option(labels).getOrElse(FloatingLabels(Seq()))
+      var fullStyle = style
+      fullStyle += ("left" -> s"${x}px")
+      fullStyle += ("top" -> s"${y}px")
+      update(copy(labels = FloatingLabels(oldLabels.items :+ FloatingLabel(text, fullStyle))))
+    }
   }
 }
+
+case class FloatingLabels(items: Seq[FloatingLabel])
+case class FloatingLabel(html: String, style: Map[String, String])
 
 case class Chart(
     width: Int = 500,
@@ -55,26 +72,32 @@ case class Chart(
     plotBorderColor: Color = null,
     plotBorderWidth: Option[Int] = None,
     plotShadow: Option[Boolean] = None,
+    polar: Option[Boolean] = None,
+    style: Map[String, String] = null,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def api[T](update: Chart => T) = new {
+  def api[T](update: Chart => T) = new API {
     def size(w: Int, h: Int) = update(copy(width = w, height = h))
     def borderColor(x: Color) = update(copy(borderColor = x))
     def backgroundColor(x: Color) = update(copy(backgroundColor = x))
-    @WebMethod(action="Corner radius for chart border")
+    @WebMethod(action = "Corner radius for chart border")
     def borderRadius(x: Int) = update(copy(borderRadius = Some(x)))
-    @WebMethod(action="Pixel width of chart border")
+    @WebMethod(action = "Pixel width of chart border")
     def borderWidth(x: Int) = update(copy(borderWidth = x))
-    @WebMethod(action="Outer margin: top, right, bottom, left")
+    @WebMethod(action = "Outer margin: top, right, bottom, left")
     def margin(top: Int, right: Int, bottom: Int, left: Int) = update(copy(margin = Some((top, right, bottom, left))))
-    @WebMethod(action="Background color of the plot area")
+    @WebMethod(action = "Background color of the plot area")
     def plotBackgroundColor(x: Color) = update(copy(plotBackgroundColor = x))
-    @WebMethod(action="Color of the plot area")
+    @WebMethod(action = "Color of the plot area")
     def plotBorderColor(x: Color) = update(copy(plotBorderColor = x))
-    @WebMethod(action="Pixel width of plot area border")
+    @WebMethod(action = "Pixel width of plot area border")
     def plotBorderWidth(x: Int) = update(copy(plotBorderWidth = Some(x)))
-    @WebMethod(action="Pixel width of plot area border")
+    @WebMethod(action = "Show shadow (background color must be set)")
     def plotShadow(x: Boolean) = update(copy(plotShadow = Some(x)))
+    @WebMethod(action = "Use polar coordinates (r, theta)")
+    def polar(x: Boolean) = update(copy(polar = Some(x)))
+    @WebMethod(action = "CSS style")
+    def style(x: Map[String, String]) = update(copy(style = x))
   }
 }
 
@@ -103,13 +126,45 @@ object Stacking {
   case object normal extends Stacking
   case object percent extends Stacking
 }
+
 case class Legend(
     x: Option[Int] = None,
     y: Option[Int] = None,
-    title: String = "",
+    title: LegendTitle = null,
     enabled: Boolean = true,
+    align: HAlign = null,
+    borderWidth: Int = 2,
+    borderColor: Color = null,
+    backgroundColor: Color = null,
+    borderRadius: Option[Int] = None,
+    floating: Option[Boolean] = None,
+    layout: Orientation = null,
+    shadow: Option[Boolean] = None,
+    verticalAlign: VAlign = null,
     other: Map[String, JsValue] = Map()
-    ) extends HighchartElement
+    ) extends HighchartElement {
+  def api[T](update: Legend => T) = new API {
+    @WebMethod(action = "(x,y) position")
+    def position(x: Int, y: Int) = update(copy(x = Some(x), y = Some(y)))
+    def enabled(x: Boolean) = update(copy(enabled = x))
+    @WebMethod(action = "Allow legend to overlap plot area")
+    def floating(x: Boolean) = update(copy(floating = Some(x)))
+    def horizontalJustification(x: HAlign) = update(copy(align = x))
+    def borderColor(x: Color) = update(copy(borderColor = x))
+    def backgroundColor(x: Color) = update(copy(backgroundColor = x))
+    def borderRadius(x: Int) = update(copy(borderRadius = Some(x)))
+    def borderWidth(x: Int) = update(copy(borderWidth = x))
+    @WebMethod(action = "horizontal/vertical layout")
+    def layout(x: Orientation) = update(copy(layout = x))
+    @WebMethod(action = "Show shadow (background color must be set)")
+    def shadow(x: Boolean) = update(copy(shadow = Some(x)))
+    @WebMethod(action = "Title text and CSS style")
+    def title(text: String, style: Map[String,String] = Map()) = update(copy(title = LegendTitle(text, style)))
+    def verticalJustification(x: VAlign) = update(copy(verticalAlign = x))
+  }
+}
+
+case class LegendTitle(text: String, style: Map[String, String] = Map())
 
 case class Series(
     data: Seq[Point],
@@ -139,15 +194,15 @@ case class DataLabels(x: Option[Int] = None,
     y: Option[Int] = None,
     other: Map[String, JsValue] = Map()) extends HighchartElement
 
-case class Title(
+case class ChartTitle(
     text: String = "",
-    align: Align = Align.center,
+    align: HAlign = HAlign.center,
     other: Map[String, JsValue] = Map()
     ) extends HighchartElement {
-  def api[T](update: Title => T) = new API {
+  def api[T](update: ChartTitle => T) = new API {
     def text(x: String) = update(copy(text = x))
-    @WebMethod(action="Align.[left|right|center]")
-    def align(x: Align) = update(copy(align = x))
+    @WebMethod(action = "Align.[left|right|center]")
+    def align(x: HAlign) = update(copy(align = x))
   }
 
 }

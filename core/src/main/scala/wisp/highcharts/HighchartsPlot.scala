@@ -6,49 +6,49 @@ import wisp.Plotter
  * Created by rodneykinney on 4/14/15.
  */
 trait BasePlot[T <: BasePlot[T]] {
-  def api: HighchartAPI = data
-  def api_=(h: HighchartAPI) = update(h)
-  protected var data: HighchartAPI
-  val plotter: Plotter[HighchartAPI, HighchartAPI]
+  def api = data.api(update)
+
+  protected var data: Highchart
+  val plotter: Plotter[Highchart, Highchart]
 
   plotter.addPlot(data)
 
-  def update(newData: HighchartAPI): T = {
+  def update(newData: Highchart): T = {
     data = plotter.updatePlot(data, newData)
     this.asInstanceOf[T]
   }
 
   def remove() = plotter.removePlot(data)
 
-  def title = api.update(update).title
-
-  def addSeries(xyData: SeriesData) = api.update(update).addSeries(xyData)
-
-  def series(idx: Int) = api.update(update).series(idx)
-
-  def layout = api.update(update).layout
-  def help = api.update(update).help
-
-  def exporting = api.update(update).exporting
+  def title = api.title
+  def addSeries(xyData: SeriesData) = api.addSeries(xyData)
+  def series(idx: Int) = api.series(idx)
+  def layout = api.layout
+  def help = api.help
+  def exporting = api.exporting
+  def colors = api.colors _
+  def legend = api.legend
+  def addFloatingLabel(x: Int, y: Int, text: String, style: Map[String, String] = Map()) =
+    api.addFloatingLabel(x, y, text, style)
 }
 
-class LinePlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
-    extends BasePlot[LinePlot] with HasLegend[LinePlot] with HasXYAxis[LinePlot]
+class LinePlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+    extends BasePlot[LinePlot] with HasXYAxis[LinePlot]
 
-class AreaPlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
-    extends BasePlot[AreaPlot] with HasLegend[AreaPlot] with HasXYAxis[AreaPlot] with HasStacking[AreaPlot] {
+class AreaPlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+    extends BasePlot[AreaPlot] with HasXYAxis[AreaPlot] with HasStacking[AreaPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(area = f(o.area))
 }
 
-class BarPlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
-    extends BasePlot[BarPlot] with HasLegend[BarPlot] with HasXYAxis[BarPlot] with HasStacking[BarPlot] {
+class BarPlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+    extends BasePlot[BarPlot] with HasXYAxis[BarPlot] with HasStacking[BarPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(bar = f(o.bar))
 }
 
-class ColumnPlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, HighchartAPI])
-    extends BasePlot[ColumnPlot] with HasLegend[ColumnPlot] with HasXYAxis[ColumnPlot] with HasStacking[ColumnPlot] {
+class ColumnPlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+    extends BasePlot[ColumnPlot] with HasXYAxis[ColumnPlot] with HasStacking[ColumnPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(column = f(o.column))
 }
@@ -56,14 +56,14 @@ class ColumnPlot(var data: HighchartAPI, val plotter: Plotter[HighchartAPI, High
 trait HasXYAxis[T <: BasePlot[T]] extends BasePlot[T] {
 
   def xAxis(idx: Int): AxisAPI[T] = {
-    val axis: Axis = api.xAxis(idx)
+    val axis: Axis = data.xAxis(idx)
     axis.update { a =>
       update(data.copy(xAxis = data.xAxis.updated(idx, a)))
     }
   }
   def xAxis: AxisAPI[T] = xAxis(0)
   def yAxis(idx: Int): AxisAPI[T] = {
-    val axis: Axis = api.yAxis(idx)
+    val axis: Axis = data.yAxis(idx)
     axis.update { a =>
       update(data.copy(yAxis = data.yAxis.updated(idx, a)))
     }
@@ -71,15 +71,6 @@ trait HasXYAxis[T <: BasePlot[T]] extends BasePlot[T] {
   def yAxis: AxisAPI[T] = yAxis(0)
   def addXAxis(axis: Axis = Axis()) = update(data.copy(xAxis = data.xAxis :+ axis))
   def addYAxis(axis: Axis = Axis()) = update(data.copy(yAxis = data.yAxis :+ axis))
-}
-
-trait HasLegend[T <: BasePlot[T]] extends BasePlot[T] {
-  // Assign names to series, if mis-matched lengths use the shorter one as a cut-off
-  def legend(labels: String*) = {
-    val labelArray = labels.toArray
-    val newSeries = data.series.zipWithIndex.map { case (s, idx) => if (idx >= labels.size) s else s.copy(name = labelArray(idx)) }
-    update(data.copy(series = newSeries))
-  }
 }
 
 trait HasStacking[T <: BasePlot[T]] extends BasePlot[T] {
@@ -90,15 +81,4 @@ trait HasStacking[T <: BasePlot[T]] extends BasePlot[T] {
       Option(data.plotOptions).getOrElse(PlotOptions()),
       settings => Option(settings).getOrElse(PlotSettings()).copy(stacking = s)))
   )
-  // Combines points with the same x-value into a single visualization point
-  // normal stacking adds the values in order of the corresponding series
-  // percentage stacking creates a distribution from the values
-  //  def stack(stackType: Stacking.Type) = {
-  //    update(data.copy(plotOptions = PlotOptions(series = PlotOptionKey(stacking = stackType))))
-  //  }
-
-  // Undoes the effect of calling stack()
-  //  def unstack() = {
-  //    update(data.copy(plotOptions = PlotOptions(series = PlotOptionKey(stacking = None))))
-  //  }
 }
