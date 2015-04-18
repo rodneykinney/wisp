@@ -38,8 +38,11 @@ object HighchartsJson {
   implicit val dataLabels: JsonFormat[DataLabels] = CustomJsonFormat(DataLabels)
   implicit val richPoint: JsonFormat[RichPoint] = CustomJsonFormat(RichPoint)
   implicit val stacking: JsonFormat[Stacking] = CustomJsonFormat.asString[Stacking]
-  implicit val plotSettings: JsonFormat[PlotSettings] = CustomJsonFormat(PlotSettings)
-  implicit val plotOptions: JsonFormat[PlotOptions] = CustomJsonFormat(PlotOptions)
+  implicit val dashStyle: JsonFormat[DashStyle] = CustomJsonFormat.asString[DashStyle]
+  implicit val markerSymbol: JsonFormat[MarkerSymbol] = CustomJsonFormat.asString[MarkerSymbol]
+  implicit val marker: JsonFormat[MarkerConfig] = CustomJsonFormat(MarkerConfig)
+  implicit val plotSettings: JsonFormat[SeriesSettings] = CustomJsonFormat(SeriesSettings)
+  implicit val plotOptions: JsonFormat[PlotSpecificSettings] = CustomJsonFormat(PlotSpecificSettings)
   implicit val data: JsonFormat[Point] = new JsonWriter[Point] {
     def write(obj: Point) = obj match {
       case n: XYValue => (n.x, n.y).toJson

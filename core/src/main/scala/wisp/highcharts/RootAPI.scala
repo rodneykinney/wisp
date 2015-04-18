@@ -10,7 +10,7 @@ import javax.jws.WebMethod
  * Created by rodneykinney on 4/18/15.
  */
 trait RootPlot {
-  var data: RootConfig
+  var config: RootConfig
 }
 
 
@@ -21,7 +21,7 @@ case class RootConfig(
                        legend: Legend = Legend(),
                        series: IndexedSeq[Series] = Vector(),
                        subtitle: ChartTitle = null,
-                       plotOptions: PlotOptions = null,
+                       plotOptions: PlotSpecificSettings = null,
                        title: ChartTitle = ChartTitle(),
                        labels: FloatingLabels = null,
                        xAxis: IndexedSeq[Axis] = Vector(Axis()),
@@ -30,90 +30,84 @@ case class RootConfig(
   extends CustomJsonObject
 
 class RootAPI(
-               var data: RootConfig,
+               var config: RootConfig,
                plotter: Plotter[RootPlot, Int]) extends API with RootPlot {
   val index = plotter.addPlot(this)
 
   def update(newData: RootConfig) = {
-    data = newData
+    config = newData
     plotter.updatePlot(index, this)
     this
-    //    this.asInstanceOf[T]
   }
 
   def remove() = plotter.removePlot(index)
 
   def xAxis(idx: Int): AxisAPI[RootAPI] = {
-    val axis: Axis = data.xAxis(idx)
-    axis.update { a =>
-      update(data.copy(xAxis = data.xAxis.updated(idx, a)))
+    val axis: Axis = config.xAxis(idx)
+    axis.api { a =>
+      update(config.copy(xAxis = config.xAxis.updated(idx, a)))
     }
   }
 
   def xAxis: AxisAPI[RootAPI] = xAxis(0)
 
   def yAxis(idx: Int): AxisAPI[RootAPI] = {
-    val axis: Axis = data.yAxis(idx)
-    axis.update { a =>
-      update(data.copy(yAxis = data.yAxis.updated(idx, a)))
+    val axis: Axis = config.yAxis(idx)
+    axis.api { a =>
+      update(config.copy(yAxis = config.yAxis.updated(idx, a)))
     }
   }
 
   def yAxis: AxisAPI[RootAPI] = yAxis(0)
 
-  def addXAxis(axis: Axis = Axis()) = update(data.copy(xAxis = data.xAxis :+ axis))
+  def addXAxis(axis: Axis = Axis()) = update(config.copy(xAxis = config.xAxis :+ axis))
 
-  def addYAxis(axis: Axis = Axis()) = update(data.copy(yAxis = data.yAxis :+ axis))
+  def addYAxis(axis: Axis = Axis()) = update(config.copy(yAxis = config.yAxis :+ axis))
 
-  def stack(): RootAPI = stack(Stacking.normal)
-
-  def stack(s: Stacking): RootAPI = update {
-
-    val oldOptions = Option(data.plotOptions).getOrElse(PlotOptions())
-    val oldSettings = Option(oldOptions.series).getOrElse(PlotSettings())
-    data.copy(plotOptions =
-      oldOptions.copy(series =
-        oldSettings.copy(stacking
-          = s)))
+  @WebMethod(action = "Settings that apply to all data series on this chart")
+  def defaultSettings = {
+    val oldPlotOptions = Option(config.plotOptions).getOrElse(PlotSpecificSettings())
+    val series = Option(oldPlotOptions.series).getOrElse(SeriesSettings())
+    series.api(s => update(config.copy(plotOptions = oldPlotOptions.copy(series = s))))
   }
 
   @WebMethod(action = "Size, borders, margins, etc.")
-  def layout = data.chart.api(c => update(data.copy(chart = c)))
+  def layout = config.chart.api(c => update(config.copy(chart = c)))
 
   @WebMethod(action = "Legend layout")
-  def legend = data.legend.api(c => update(data.copy(legend = c)))
+  def legend = config.legend.api(c => update(config.copy(legend = c)))
 
   @WebMethod(action = "Export to png, pdf, etc.")
-  def exporting = data.exporting.api(e => update(data.copy(exporting = e)))
+  def exporting = config.exporting.api(e => update(config.copy(exporting = e)))
 
   @WebMethod(action = "Data series attributes")
-  def series(idx: Int) = data.series(idx).api(s => update(data.copy(series = data.series.updated(idx, s))))
+  def series(idx: Int) = config.series(idx).api(s => update(config.copy(series = config.series.updated(idx, s))))
 
   @WebMethod(action = "Add new data series")
   def addSeries(xyData: SeriesData) = update {
-    val oldSeries = data.series
+    val oldSeries = config.series
     val seriesType = if (oldSeries.size > 0) oldSeries(0).`type` else SeriesType.line
-    data.copy(series =
+    config.copy(series =
       oldSeries :+ Series(data = xyData.points, `type` = seriesType))
   }
 
   @WebMethod(action = "Title options")
-  def title = data.title.api(t => update(data.copy(title = t)))
+  def title = config.title.api(t => update(config.copy(title = t)))
 
   @WebMethod(action = "Default colors for data series")
-  def colors(x: Seq[Color]) = update(data.copy(colors = x))
+  def colors(x: Seq[Color]) = update(config.copy(colors = x))
 
   @WebMethod(action = "Add Text Label at (x,y) with CSS style")
   def addFloatingLabel(x: Int, y: Int, text: String, style: Map[String, String] = Map()) = {
-    val oldLabels = Option(data.labels).getOrElse(FloatingLabels(Seq()))
+    val oldLabels = Option(config.labels).getOrElse(FloatingLabels(Seq()))
     var fullStyle = style
     fullStyle += ("left" -> s"${x}px")
     fullStyle += ("top" -> s"${y}px")
-    update(data.copy(labels = FloatingLabels(oldLabels.items :+ FloatingLabel(text, fullStyle))))
+    update(config.copy(labels = FloatingLabels(oldLabels.items :+ FloatingLabel(text, fullStyle))))
   }
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(data.copy(other = data.other + (name -> value)))
+  def other(name: String, value: JsValue) = update(config.copy(other = config.other + (name -> value)))
 }
 
 case class Exporting(enabled: Boolean = true,

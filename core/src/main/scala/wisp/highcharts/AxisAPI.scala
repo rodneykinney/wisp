@@ -15,13 +15,13 @@ case class Axis(
                  min: Option[Double] = None,
                  max: Option[Double] = None,
                  other: Map[String, JsValue] = Map()) extends CustomJsonObject {
-  def update[T](update: Axis => T) = new AxisAPI(this)(update)
+  def api[T](update: Axis => T) = new AxisAPI(this)(update)
 }
 
 class AxisAPI[T](axis: Axis)(update: Axis => T) extends API {
   def axisType(x: AxisType) = update(axis.copy(`type` = x))
 
-  def title = axis.title.update(t => update(axis.copy(title = t)))
+  def title = axis.title.api(t => update(axis.copy(title = t)))
 
   def categories(x: Iterable[String]) = update(axis.copy(categories = x.toIndexedSeq))
 
@@ -34,7 +34,7 @@ class AxisAPI[T](axis: Axis)(update: Axis => T) extends API {
 
 case class AxisTitle(text: String = "",
                      other: Map[String, JsValue] = Map()) extends CustomJsonObject {
-  def update[T](update: AxisTitle => T) = new AxisTitleAPI(this, update)
+  def api[T](update: AxisTitle => T) = new AxisTitleAPI(this, update)
 }
 
 class AxisTitleAPI[T](at: AxisTitle, update: AxisTitle => T) extends API {

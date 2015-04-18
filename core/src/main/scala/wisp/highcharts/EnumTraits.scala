@@ -1,5 +1,6 @@
 package wisp.highcharts
 
+import java.awt.Color
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 /**
@@ -81,6 +82,48 @@ object Stacking {
   val PERCENT = percent
   case object normal extends Stacking
   case object percent extends Stacking
+}
+
+sealed trait DashStyle extends EnumTrait
+
+object DashStyle {
+  val SOLID = Solid
+  val SHORT_DASH = ShortDash
+  val SHORT_DOT = ShortDot
+  val SHORT_DASH_DOT = ShortDashDot
+  val SHORT_DASH_DOT_DOT = ShortDashDotDot
+  val DOT = Dot
+  val DASH = Dash
+  val LONG_DASH = LongDash
+  val LONG_DASH_DOT_DOT = LongDashDotDot
+  val LONG_DASH_DOT = LongDashDot
+  val DASH_DOT = DashDot
+  case object Solid extends DashStyle
+  case object ShortDash extends DashStyle
+  case object ShortDot extends DashStyle
+  case object ShortDashDot extends DashStyle
+  case object ShortDashDotDot extends DashStyle
+  case object Dot extends DashStyle
+  case object Dash extends DashStyle
+  case object LongDash extends DashStyle
+  case object LongDashDot extends DashStyle
+  case object LongDashDotDot extends DashStyle
+  case object DashDot extends DashStyle
+}
+
+sealed trait MarkerSymbol extends EnumTrait
+
+object MarkerSymbol {
+  val CIRCLE = circle
+  val SQUARE = square
+  val DIAMOND = diamond
+  val TRIANGLE  = triangle
+  val TRIANGLE_DOWN = `triangle-down`
+  case object circle extends MarkerSymbol
+  case object square extends MarkerSymbol
+  case object diamond extends MarkerSymbol
+  case object triangle extends MarkerSymbol
+  case object `triangle-down` extends MarkerSymbol
 }
 
 

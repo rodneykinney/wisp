@@ -27,7 +27,7 @@ class HighchartsHtmlPlotter extends HtmlPlotter[RootPlot, RootConfig] {
         """.stripMargin
   }
 
-  override def getPlotState(plot: RootPlot): RootConfig = plot.data
+  override def getPlotState(plot: RootPlot): RootConfig = plot.config
 
-  override def setPlotState(plot: RootPlot, state: RootConfig): Unit = plot.data = state
+  override def setPlotState(plot: RootPlot, state: RootConfig): Unit = plot.config = state
 }

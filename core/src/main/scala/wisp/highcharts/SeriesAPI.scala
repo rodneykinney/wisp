@@ -23,12 +23,22 @@ case class Series(
 class SeriesAPI[T](series: Series, update: Series => T) extends API {
   def name(s: String) = update(series.copy(name = s))
 
+  def settings = SeriesSettings().api {
+    import HighchartsJson._
+    import spray.json._
+    newSettings =>
+      var o = this.series.other
+      for ((name, value) <- newSettings.toJson.asInstanceOf[JsObject].fields) {
+        o += (name -> value)
+      }
+      update(this.series.copy(other = o))
+  }
+
   @WebMethod(action = "Add additional values to the JSON object")
   def other(name: String, value: JsValue) = update(series.copy(other = series.other + (name ->
     value)))
 
 }
-
 
 sealed trait Point extends CustomJsonObject
 
