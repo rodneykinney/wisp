@@ -49,7 +49,7 @@ object HighchartsJson {
   implicit val series: JsonFormat[Series] = this(Series)
   implicit val floatingLabel = jsonFormat2(FloatingLabel)
   implicit val floatingLabels = jsonFormat1(FloatingLabels)
-  implicit val highchartData: JsonFormat[Highchart] = this(Highchart)
+  implicit val highchartData: JsonFormat[HighchartsRoot] = this(HighchartsRoot)
 
 
   private[this] type JF[T] = JsonWriter[T] // simple alias for reduced verbosity

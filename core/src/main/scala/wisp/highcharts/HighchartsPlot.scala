@@ -6,7 +6,7 @@ import wisp.Plotter
  * Created by rodneykinney on 4/14/15.
  */
 trait Plot {
-var data: Highchart
+var data: HighchartsRoot
 }
 
 trait BasePlot[T <: BasePlot[T]] extends Plot {
@@ -16,7 +16,7 @@ trait BasePlot[T <: BasePlot[T]] extends Plot {
 
   val index = plotter.addPlot(this)
 
-  def update(newData: Highchart): T = {
+  def update(newData: HighchartsRoot): T = {
     data = newData
     plotter.updatePlot(index, this)
     this.asInstanceOf[T]
@@ -36,22 +36,22 @@ trait BasePlot[T <: BasePlot[T]] extends Plot {
     api.addFloatingLabel(x, y, text, style)
 }
 
-class LinePlot(var data: Highchart, val plotter: Plotter[Plot, Int])
+class LinePlot(var data: HighchartsRoot, val plotter: Plotter[Plot, Int])
     extends BasePlot[LinePlot] with HasXYAxis[LinePlot]
 
-class AreaPlot(var data: Highchart, val plotter: Plotter[Plot, Int])
+class AreaPlot(var data: HighchartsRoot, val plotter: Plotter[Plot, Int])
     extends BasePlot[AreaPlot] with HasXYAxis[AreaPlot] with HasStacking[AreaPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(area = f(o.area))
 }
 
-class BarPlot(var data: Highchart, val plotter: Plotter[Plot, Int])
+class BarPlot(var data: HighchartsRoot, val plotter: Plotter[Plot, Int])
     extends BasePlot[BarPlot] with HasXYAxis[BarPlot] with HasStacking[BarPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(bar = f(o.bar))
 }
 
-class ColumnPlot(var data: Highchart, val plotter: Plotter[Plot, Int])
+class ColumnPlot(var data: HighchartsRoot, val plotter: Plotter[Plot, Int])
     extends BasePlot[ColumnPlot] with HasXYAxis[ColumnPlot] with HasStacking[ColumnPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(column = f(o.column))

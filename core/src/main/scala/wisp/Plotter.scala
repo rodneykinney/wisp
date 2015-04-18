@@ -3,7 +3,7 @@ package wisp
 import java.io.{File, PrintWriter}
 
 import wisp.highcharts.HighchartsJson._
-import wisp.highcharts.Highchart
+import wisp.highcharts.HighchartsRoot
 import org.apache.commons.io.FileUtils
 import spray.json._
 import unfiltered.jetty.Server
