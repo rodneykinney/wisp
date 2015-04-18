@@ -1,0 +1,48 @@
+package wisp.highcharts
+
+import spray.json.JsValue
+import wisp.CustomJsonObject
+
+import javax.jws.WebMethod
+
+/**
+ * Created by rodneykinney on 4/18/15.
+ */
+case class Axis(
+                 title: AxisTitle = AxisTitle(),
+                 `type`: AxisType = AxisType.linear,
+                 categories: IndexedSeq[String] = null,
+                 min: Option[Double] = None,
+                 max: Option[Double] = None,
+                 other: Map[String, JsValue] = Map()) extends CustomJsonObject {
+  def update[T](update: Axis => T) = new AxisAPI(this)(update)
+}
+
+class AxisAPI[T](axis: Axis)(update: Axis => T) extends API {
+  def axisType(x: AxisType) = update(axis.copy(`type` = x))
+
+  def title = axis.title.update(t => update(axis.copy(title = t)))
+
+  def categories(x: Iterable[String]) = update(axis.copy(categories = x.toIndexedSeq))
+
+  def range(min: Double, max: Double) = update(axis.copy(min = Some(min), max = Some(max)))
+
+  @WebMethod(action = "Add additional values to the JSON object")
+  def other(name: String, value: JsValue) = update(axis.copy(other = axis.other + (name -> value)))
+
+}
+
+case class AxisTitle(text: String = "",
+                     other: Map[String, JsValue] = Map()) extends CustomJsonObject {
+  def update[T](update: AxisTitle => T) = new AxisTitleAPI(this, update)
+}
+
+class AxisTitleAPI[T](at: AxisTitle, update: AxisTitle => T) extends API {
+  def text(x: String) = update(at.copy(text = x))
+
+  @WebMethod(action = "Add additional values to the JSON object")
+  def other(name: String, value: JsValue) = update(at.copy(other = at.other + (name -> value)))
+
+}
+
+

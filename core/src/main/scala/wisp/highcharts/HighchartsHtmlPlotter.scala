@@ -9,9 +9,9 @@ import HighchartsJson._
 /**
  * Created by rodneykinney on 4/16/15.
  */
-class HighchartsHtmlPlotter extends HtmlPlotter[Plot, HighchartsRoot] {
+class HighchartsHtmlPlotter extends HtmlPlotter[RootPlot, RootConfig] {
 
-  def renderPlot(hc: HighchartsRoot) = {
+  def renderPlot(hc: RootConfig) = {
     val json = hc.toJson.toString
     val containerId = json.hashCode.toHexString
     s"""
@@ -27,7 +27,7 @@ class HighchartsHtmlPlotter extends HtmlPlotter[Plot, HighchartsRoot] {
         """.stripMargin
   }
 
-  override def getPlotState(plot: Plot): HighchartsRoot = plot.data
+  override def getPlotState(plot: RootPlot): RootConfig = plot.data
 
-  override def setPlotState(plot: Plot, state: HighchartsRoot): Unit = plot.data = state
+  override def setPlotState(plot: RootPlot, state: RootConfig): Unit = plot.data = state
 }

@@ -9,8 +9,8 @@ object Scratch {
   val y = x.map(t => t * t * t * t)
 
   def main(args: Array[String]): Unit = {
-    undoRedo()
-//    suite()
+//    undoRedo()
+    suite()
   }
   
   def undoRedo(): Unit = {

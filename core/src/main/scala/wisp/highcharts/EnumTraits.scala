@@ -73,3 +73,14 @@ object Orientation {
   case object vertical extends Orientation
   case object horizontal extends Orientation
 }
+
+sealed trait Stacking extends EnumTrait
+
+object Stacking {
+  val NORMAL = normal
+  val PERCENT = percent
+  case object normal extends Stacking
+  case object percent extends Stacking
+}
+
+
