@@ -18,75 +18,87 @@ import scala.util.{Failure, Random, Try}
  */
 trait Plotter[T, TRef] {
   def addPlot(plot: T): TRef
+
   def updatePlot(id: TRef, newPlot: T): TRef
+
   def removePlot(id: TRef): TRef
+
   def plots: Seq[T]
 }
 
-case class PlotsHolder[T, TRef](plotsWithId: Vector[(TRef, T)] = Vector()) {
-  def add(id: TRef, plot: T) =
-    PlotsHolder(plotsWithId :+(id, plot))
+abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
+  private var plotVector = Vector.empty[Option[(P, S)]]
+  private var commandHistory = Vector.empty[Command]
+  private var lastCommand = -1
 
-  def update(id: TRef, newId: TRef, newPlot: T) = {
-    val idx = plotsWithId.zipWithIndex.find { case ((elementId, e), idx) => elementId == id }.map(_._2)
-    idx match {
-      case Some(i) =>
-        PlotsHolder(plotsWithId.updated(i, (newId, newPlot)))
-      case None =>
-        PlotsHolder(plotsWithId :+ (newId, newPlot))
+  def getPlotState(plot: P): S
+
+  def setPlotState(plot: P, state: S)
+
+  def renderPlot(state: S): String
+
+  def plots = plotVector.flatten.map(_._1)
+
+  def addPlot(plot: P) = {
+    val idx = plotVector.size
+    executeCommand(Add(idx, plot, getPlotState(plot)))
+    refresh()
+    idx
+  }
+
+  def updatePlot(idx: Int, newPlot: P) = {
+    if (idx >= 0 && idx < plotVector.size) {
+      val (plot, state) = plotVector(idx).get
+      executeCommand(Update(idx, newPlot, state, getPlotState(newPlot)))
+      refresh()
+    }
+    idx
+  }
+
+  def executeCommand(cmd: Command) = {
+    commandHistory = commandHistory.take(lastCommand + 1) :+ cmd
+    lastCommand += 1
+    cmd.execute
+  }
+
+  def removePlot(idx: Int) = {
+    if (idx >= 0 && idx < plotVector.size) {
+      plotVector(idx) match {
+        case Some((plot, state)) =>
+          executeCommand(Remove(idx, plot, state))
+          refresh()
+        case None => ()
+      }
+    }
+    idx
+  }
+
+  def undo() = {
+    if (lastCommand >= 0) {
+      commandHistory(lastCommand).undo.execute
+      lastCommand -= 1
+      refresh()
+    }
+    else {
+      println("Nothing to undo")
     }
   }
 
-  def remove(id: TRef) = {
-    PlotsHolder(plotsWithId.filterNot(id == _._1))
-  }
-
-  def plots = plotsWithId.map(_._2)
-
-}
-
-abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
-  def idFor(plot: T): TRef
-  def renderPlot(plot: T): String
-
-  private val undoRedo = new UndoRedo[PlotsHolder[T, TRef]]
-  undoRedo.push(PlotsHolder[T, TRef]())
-  private def holder = undoRedo.head.getOrElse(PlotsHolder[T, TRef]())
-  def plots = holder.plots
-
-  def addPlot(plot: T) = {
-    val id = idFor(plot)
-    undoRedo.push(holder.add(id, plot))
-    refresh()
-    id
-  }
-
-  def updatePlot(id: TRef, newPlot: T) = {
-    val newId = idFor(newPlot)
-    undoRedo.push(holder.update(id, newId, newPlot))
-    refresh()
-    newId
-  }
-
-  def removePlot(id: TRef): TRef = {
-    undoRedo.push(holder.remove(id))
-    refresh()
-    id
-  }
-
-  def removePlot(idx: Int): TRef = removePlot(idFor(plots(idx)))
-
-  def undo() = {
-    undoRedo.undo()
-    refresh()
-  }
-
   def redo() = {
-    undoRedo.redo()
-    refresh()
+    if (lastCommand < commandHistory.size - 1) {
+      commandHistory(lastCommand + 1).execute
+      lastCommand += 1
+      refresh()
+    }
+    else {
+      println("Nothing to redo")
+    }
   }
 
-  def clear() = undoRedo.push(PlotsHolder())
+  def clear() =
+    for ((Some(p), i) <- plotVector.zipWithIndex) {
+      removePlot(i)
+    }
 
   private var port = Port.any
   private var serverMode = false
@@ -121,8 +133,8 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
       java.awt.Desktop.getDesktop.browse(new java.net.URI(link))
       link
     }
-        .orElse(Try(s"open $link" !!))
-        .orElse(Try(s"xdg-open $link" !!))
+      .orElse(Try(s"open $link" !!))
+      .orElse(Try(s"xdg-open $link" !!))
   }
 
   /**
@@ -184,7 +196,7 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
     sb.append(reloadJs)
     sb.append("</head>")
     sb.append("<body>")
-    plots.map(renderPlot).foreach(sb.append)
+    plotVector.flatten.map(_._2).map(renderPlot).foreach(sb.append)
     sb.append("</body>")
     sb.append("</html>")
 
@@ -235,8 +247,42 @@ abstract class HtmlPlotter[T, TRef] extends Plotter[T, TRef] {
       |    </title>
       |    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     """.stripMargin +
-        wispJsImports
+      wispJsImports
 
+
+  trait Command {
+    def execute: Unit
+
+    def undo: Command
+  }
+
+  case class Add(idx: Int, plot: P, state: S) extends Command {
+    def execute = {
+      if (idx == plotVector.size)
+        plotVector = plotVector :+ Some((plot, state))
+      else if (idx < plotVector.size)
+        plotVector = plotVector.updated(idx, Some((plot, state)))
+    }
+
+    def undo = Remove(idx, plot, state)
+  }
+
+  case class Remove(idx: Int, plot: P, state: S) extends Command {
+    def execute = {
+      plotVector = plotVector.updated(idx, None)
+    }
+
+    def undo = Add(idx, plot, state)
+  }
+
+  case class Update(idx: Int, plot: P, oldState: S, newState: S) extends Command {
+    def execute = {
+      setPlotState(plot, newState)
+      plotVector = plotVector.updated(idx, Some((plot, newState)))
+    }
+
+    def undo = Update(idx, plot, newState, oldState)
+  }
 
 }
 

@@ -9,11 +9,19 @@ object Scratch {
   val y = x.map(t => t * t * t * t)
 
   def main(args: Array[String]): Unit = {
-    newAPI
-    //    oldAPI
+    undoRedo()
+//    suite()
+  }
+  
+  def undoRedo(): Unit = {
+    import Plot._
+    val lc = line(1 to 10)
+    lc.title.text("Title")
+    undo()
+    redo()
   }
 
-  def newAPI: Unit = {
+  def suite(): Unit = {
     import Plot._
     val b = bar(x.take(10))
         .addSeries(x.drop(20).take(10))

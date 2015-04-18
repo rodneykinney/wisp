@@ -5,20 +5,24 @@ import wisp.Plotter
 /**
  * Created by rodneykinney on 4/14/15.
  */
-trait BasePlot[T <: BasePlot[T]] {
+trait Plot {
+var data: Highchart
+}
+
+trait BasePlot[T <: BasePlot[T]] extends Plot {
   def api = data.api(update)
 
-  protected var data: Highchart
-  val plotter: Plotter[Highchart, Highchart]
+  val plotter: Plotter[Plot, Int]
 
-  plotter.addPlot(data)
+  val index = plotter.addPlot(this)
 
   def update(newData: Highchart): T = {
-    data = plotter.updatePlot(data, newData)
+    data = newData
+    plotter.updatePlot(index, this)
     this.asInstanceOf[T]
   }
 
-  def remove() = plotter.removePlot(data)
+  def remove() = plotter.removePlot(index)
 
   def title = api.title
   def addSeries(xyData: SeriesData) = api.addSeries(xyData)
@@ -32,22 +36,22 @@ trait BasePlot[T <: BasePlot[T]] {
     api.addFloatingLabel(x, y, text, style)
 }
 
-class LinePlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+class LinePlot(var data: Highchart, val plotter: Plotter[Plot, Int])
     extends BasePlot[LinePlot] with HasXYAxis[LinePlot]
 
-class AreaPlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+class AreaPlot(var data: Highchart, val plotter: Plotter[Plot, Int])
     extends BasePlot[AreaPlot] with HasXYAxis[AreaPlot] with HasStacking[AreaPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(area = f(o.area))
 }
 
-class BarPlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+class BarPlot(var data: Highchart, val plotter: Plotter[Plot, Int])
     extends BasePlot[BarPlot] with HasXYAxis[BarPlot] with HasStacking[BarPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(bar = f(o.bar))
 }
 
-class ColumnPlot(var data: Highchart, val plotter: Plotter[Highchart, Highchart])
+class ColumnPlot(var data: Highchart, val plotter: Plotter[Plot, Int])
     extends BasePlot[ColumnPlot] with HasXYAxis[ColumnPlot] with HasStacking[ColumnPlot] {
   override def updateOptions(o: PlotOptions, f: (PlotSettings) => PlotSettings): PlotOptions =
     o.copy(column = f(o.column))
