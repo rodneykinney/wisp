@@ -21,8 +21,13 @@ case class Series(
 }
 
 class SeriesAPI[T](series: Series, update: Series => T) extends API {
+  @WebMethod
   def name(s: String) = update(series.copy(name = s))
 
+  @WebMethod
+  def seriesType(t: SeriesType)= update(series.copy(`type` = t))
+
+  @WebMethod
   def settings = SeriesSettings().api {
     import HighchartsJson._
     import spray.json._
@@ -40,12 +45,10 @@ class SeriesAPI[T](series: Series, update: Series => T) extends API {
       for ((p, i) <- series.data.zipWithIndex) yield {
         val label = labeler(i)
         p match {
-          case XYValue(x, y) =>
-            RichPoint(x = Some(x), y = Some(y), dataLabels = label)
-          case YValue(y) =>
-            RichPoint(x = None, y = Some(y), dataLabels = label)
           case r: RichPoint =>
             r.copy(dataLabels = label)
+          case _ =>
+            RichPoint(x = p.X, y = p.Y, dataLabels = label)
         }
       }
     update(series.copy(data = newData))
@@ -57,18 +60,34 @@ class SeriesAPI[T](series: Series, update: Series => T) extends API {
 
 }
 
-sealed trait Point
+sealed trait Point {
+  def X: Option[Double]
+  def Y: Option[Double]
+  def Name: Option[String]
+}
 
-case class RichPoint(x: Option[Double] = None,
+case class RichPoint(name: String = null,
+                     x: Option[Double] = None,
                      y: Option[Double] = None,
                      color: Color = null,
                      dataLabels: DataLabel = null,
-                     name: String = null,
-                     other: Map[String, JsValue] = Map()) extends Point with CustomJsonObject
+                     other: Map[String, JsValue] = Map()) extends Point with CustomJsonObject {
+  def X = x
+  def Y = y
+  def Name = Some(name)
+}
 
-case class XYValue(x: Double, y: Double) extends Point
+case class XYValue(x: Double, y: Double) extends Point {
+  def X = Some(x)
+  def Y = Some(y)
+  def Name = None
+}
 
-case class YValue(value: Double) extends Point
+case class YValue(value: Double) extends Point {
+  def X = Some(value)
+  def Y = None
+  def Name = None
+}
 
 case class DataLabel(backgroundColor: Color = null,
                      color: Color = null,

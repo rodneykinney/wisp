@@ -1,3 +1,7 @@
+import wisp.Plot._
+
+import scala.util.Random
+
 import java.awt.Color
 
 import wisp._
@@ -10,7 +14,8 @@ object Scratch {
 
   def main(args: Array[String]): Unit = {
     //    undoRedo()
-    suite()
+    //    suite()
+    histograms
   }
 
   def undoRedo(): Unit = {
@@ -19,6 +24,17 @@ object Scratch {
     lc.title.text("Title")
     undo()
     redo()
+  }
+
+  def histograms: Unit = {
+    histogram(List(0, 1)).title.text("0,1")
+    histogram(0 to 200).title.text("0-201")
+    histogram(
+      for (i <- 1 to 6; j <- 1 to 6) yield i + j
+    ).title.text("2d6")
+    val r = new Random()
+    histogram((0 to 10000).map(i => r.nextDouble())).title.text("Uniform")
+    histogram((0 to 10000).map(i => r.nextDouble() + r.nextDouble())).title.text("Bell curve")
   }
 
   def suite(): Unit = {
@@ -49,8 +65,9 @@ object Scratch {
       .layout.size(800, 400)
     val x1 = x.take(10) ++ x.drop(80).take(10)
     val lcNA = line(List(1.0, 2.0, 3.0), List("One", "Two", "Three"))
-    .xAxis.categories(List("A","B","C"))
-    .yAxis.categories(List("Do","Re","Mi"))
-    .series(0).showPointLabels(i => DataLabel(backgroundColor = Color.LIGHT_GRAY))
+      .xAxis.categories(List("A", "B", "C"))
+      .yAxis.categories(List("Do", "Re", "Mi"))
+      .series(0).showPointLabels(i => DataLabel(backgroundColor = Color.LIGHT_GRAY))
+
   }
 }

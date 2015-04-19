@@ -19,12 +19,16 @@ case class Axis(
 }
 
 class AxisAPI[T](axis: Axis)(update: Axis => T) extends API {
+  @WebMethod
   def axisType(x: AxisType) = update(axis.copy(`type` = x))
 
+  @WebMethod
   def title = axis.title.api(t => update(axis.copy(title = t)))
 
+  @WebMethod
   def categories(x: Iterable[String]) = update(axis.copy(categories = x.toIndexedSeq))
 
+  @WebMethod
   def range(min: Double, max: Double) = update(axis.copy(min = Some(min), max = Some(max)))
 
   @WebMethod(action = "Add additional values to the JSON object")
@@ -38,6 +42,7 @@ case class AxisTitle(text: String = "",
 }
 
 class AxisTitleAPI[T](at: AxisTitle, update: AxisTitle => T) extends API {
+  @WebMethod
   def text(x: String) = update(at.copy(text = x))
 
   @WebMethod(action = "Add additional values to the JSON object")

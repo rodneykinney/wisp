@@ -2,6 +2,9 @@ package wisp.highcharts
 
 import spray.json.JsValue
 
+import scala.collection.mutable.ListBuffer
+
+import java.lang.reflect.Method
 import javax.jws.WebMethod
 
 /**
@@ -10,11 +13,10 @@ import javax.jws.WebMethod
 trait API {
   def help = {
     val methodDescriptions = for {
-      m <- this.getClass.getDeclaredMethods
-      method = m.getName
-      if (method.indexOf('$') < 0 && method != "help")
+      m <- methods
     } yield {
-      val msg = Option(m.getAnnotation(classOf[WebMethod])).map(s => s" -- ${s.action}").getOrElse("")
+      val msg = Option(m.getAnnotation(classOf[WebMethod])).
+        map(_.action).filter(_.length > 0).map(s => s" -- $s").getOrElse("")
       val params = m.getParameterTypes.map(_.getSimpleName) match {
         case Array() => ""
         case a => a.mkString("(", ", ", ")")
@@ -28,6 +30,21 @@ trait API {
     for (line <- methodDescriptions.filter(_.startsWith("other(")).sorted) {
       println(line)
     }
+  }
+
+  def methods = {
+    val methodList = new ListBuffer[Method]
+    var c: Class[_] = this.getClass
+    while (c.getName.endsWith("API")) {
+      for {
+        method <- c.getDeclaredMethods
+        methodName = method.getName
+        if method.getAnnotation(classOf[WebMethod]) != null
+      }
+        methodList.append(method)
+      c = c.getSuperclass
+    }
+    methodList.toList
   }
 
   def other(name: String, value: JsValue): Any

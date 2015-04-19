@@ -29,10 +29,13 @@ case class Chart(
 }
 
 class ChartAPI[T](chart: Chart, update: Chart => T) extends API {
+  @WebMethod
   def size(w: Int, h: Int) = update(chart.copy(width = w, height = h))
 
+  @WebMethod
   def borderColor(x: Color) = update(chart.copy(borderColor = x))
 
+  @WebMethod
   def backgroundColor(x: Color) = update(chart.copy(backgroundColor = x))
 
   @WebMethod(action = "Corner radius for chart border")
@@ -75,6 +78,7 @@ case class ChartTitle(
 }
 
 class ChartTitleAPI[T](ct: ChartTitle, update: ChartTitle => T) extends API {
+  @WebMethod
   def text(x: String) = update(ct.copy(text = x))
 
   @WebMethod(action = "Align.[left|right|center]")

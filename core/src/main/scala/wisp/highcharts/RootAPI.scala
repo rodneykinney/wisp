@@ -40,8 +40,10 @@ class RootAPI(
     this
   }
 
+  @WebMethod(action = "Remove this chart from view")
   def remove() = plotter.removePlot(index)
 
+  @WebMethod
   def xAxis(idx: Int): AxisAPI[RootAPI] = {
     val axis: Axis = config.xAxis(idx)
     axis.api { a =>
@@ -49,8 +51,10 @@ class RootAPI(
     }
   }
 
+  @WebMethod
   def xAxis: AxisAPI[RootAPI] = xAxis(0)
 
+  @WebMethod
   def yAxis(idx: Int): AxisAPI[RootAPI] = {
     val axis: Axis = config.yAxis(idx)
     axis.api { a =>
@@ -58,10 +62,13 @@ class RootAPI(
     }
   }
 
+  @WebMethod
   def yAxis: AxisAPI[RootAPI] = yAxis(0)
 
+  @WebMethod
   def addXAxis(axis: Axis = Axis()) = update(config.copy(xAxis = config.xAxis :+ axis))
 
+  @WebMethod
   def addYAxis(axis: Axis = Axis()) = update(config.copy(yAxis = config.yAxis :+ axis))
 
   @WebMethod(action = "Settings that apply to all data series on this chart")
@@ -116,6 +123,7 @@ case class Exporting(enabled: Boolean = true,
 }
 
 class ExportingAPI[T](e: Exporting, update: Exporting => T) extends API {
+  @WebMethod
   def enabled(x: Boolean) = update(e.copy(enabled = x))
 
   @WebMethod(action = "Add additional values to the JSON object")

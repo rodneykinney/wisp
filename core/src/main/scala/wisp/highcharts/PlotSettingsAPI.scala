@@ -30,18 +30,25 @@ case class SeriesSettings(
 }
 
 class SeriesSettingsAPI[T](s: SeriesSettings, update: SeriesSettings => T) extends API {
+  @WebMethod
   def dashStyle(x: DashStyle) = update(s.copy(dashStyle = x))
 
+  @WebMethod
   def color(x: Color) = update(s.copy(color = x))
 
+  @WebMethod
   def lineWidth(x: Int) = update(s.copy(lineWidth = Some(x)))
 
+  @WebMethod
   def marker = Option(s.marker).getOrElse(MarkerConfig()).api(m => update(s.copy(marker = m)))
 
+  @WebMethod
   def shadow(x: Boolean) = update(s.copy(shadow = Some(x)))
 
+  @WebMethod
   def stacked = stacking(Stacking.normal)
 
+  @WebMethod
   def stacking(x: Stacking) = update(s.copy(stacking = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
@@ -58,10 +65,13 @@ case class MarkerConfig(
 }
 
 class MarkerAPI[T](m: MarkerConfig, update: MarkerConfig => T) extends API {
+  @WebMethod
   def enabled(x: Boolean) = update(m.copy(enabled = Some(x)))
 
+  @WebMethod
   def color(x: Color) = update(m.copy(fillColor = x))
 
+  @WebMethod
   def symbol(x: MarkerSymbol) = update(m.copy(symbol = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
