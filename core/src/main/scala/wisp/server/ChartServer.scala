@@ -6,11 +6,16 @@ import unfiltered.response._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Promise}
 
-class ChartServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
+class ChartServer(port: Int) {
+  val httpServer = unfiltered.jetty.Server.http(port).plan(new WebApp)
+  httpServer.start()
+
   private var p = Promise[Unit]()
   private var content = "Initializing..."
   private var contentHash = ""
-  def refresh(newContent: String, newContentHash: String) = {
+
+  def refresh(newContent: String,
+              newContentHash: String) = {
     content = newContent
     contentHash = newContentHash
     p.success()
@@ -41,9 +46,8 @@ class ChartServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
     }
   }
 
-  def setup(parsed: UnfilteredWebApp.Arguments): unfiltered.filter.Plan = {
-    new WebApp
+  def stop(): Unit = {
+    httpServer.stop
+    httpServer.destroy
   }
-
-  def htmlRoot: String = "/"
 }

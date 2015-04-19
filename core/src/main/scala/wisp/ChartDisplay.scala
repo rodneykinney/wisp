@@ -1,17 +1,9 @@
 package wisp
 
-import java.io.{File, PrintWriter}
-
-import wisp.highcharts.HighchartsJson._
-import wisp.highcharts.RootConfig
-import org.apache.commons.io.FileUtils
-import spray.json._
-import unfiltered.jetty.Server
 import unfiltered.util.Port
-import wisp.server.{ChartServer, UnfilteredWebApp}
+import wisp.server.ChartServer
 
-import scala.concurrent.Promise
-import scala.util.{Failure, Random, Try}
+import scala.util.{Failure, Try}
 
 /**
  * Created by rodneykinney on 4/14/15.
@@ -26,30 +18,30 @@ trait ChartDisplay[T, TRef] {
   def charts: Seq[T]
 }
 
-abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
-  private var chartVector = Vector.empty[Option[(P, S)]]
+abstract class HtmlChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, Int] {
+  private var chartVector = Vector.empty[Option[(TChart, TConfig)]]
   private var commandHistory = Vector.empty[Command]
   private var lastCommand = -1
 
-  def getChartConfig(chart: P): S
+  def getChartConfig(chart: TChart): TConfig
 
-  def setChartConfig(chart: P, state: S)
+  def setChartConfig(chart: TChart, config: TConfig)
 
-  def renderChart(state: S): String
+  def renderChart(config: TConfig): String
 
   def charts = chartVector.flatten.map(_._1)
 
-  def addChart(chart: P) = {
+  def addChart(chart: TChart) = {
     val idx = chartVector.size
     executeCommand(Add(idx, chart, getChartConfig(chart)))
     refresh()
     idx
   }
 
-  def updateChart(idx: Int, newChart: P) = {
+  def updateChart(idx: Int, newChart: TChart) = {
     if (idx >= 0 && idx < chartVector.size) {
-      val (chart, state) = chartVector(idx).get
-      executeCommand(Update(idx, newChart, state, getChartConfig(newChart)))
+      val (chart, config) = chartVector(idx).get
+      executeCommand(Update(idx, newChart, config, getChartConfig(newChart)))
       refresh()
     }
     idx
@@ -64,8 +56,8 @@ abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
   def removeChart(idx: Int) = {
     if (idx >= 0 && idx < chartVector.size) {
       chartVector(idx) match {
-        case Some((chart, state)) =>
-          executeCommand(Remove(idx, chart, state))
+        case Some((chart, config)) =>
+          executeCommand(Remove(idx, chart, config))
           refresh()
         case None => ()
       }
@@ -101,34 +93,24 @@ abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
     }
 
   private var port = Port.any
-  private var serverMode = false
-  private var firstOpenWindow = false
+  private var browserLaunched = false
 
-  var http: Option[Server] = None
   var chartServer: Option[ChartServer] = None
 
-  startWispServer()
+  startServer()
 
-  /**
-   *
-   * @return
-   */
-  def getWispServerInfo(): (Int, Boolean) = {
-    (port, serverMode)
-  }
-
-  def setWispPort(port: Int): Unit = {
-    stopWispServer
+  def setPort(port: Int): Unit = {
+    stopServer
     this.port = port
-    startWispServer()
+    startServer()
   }
 
   def disableOpenWindow(): Unit = {
-    this.firstOpenWindow = true
+    this.browserLaunched = true
   }
 
   def openWindow(link: String) = {
-    import sys.process._
+    import scala.sys.process._
     Try {
       java.awt.Desktop.getDesktop.browse(new java.net.URI(link))
       link
@@ -141,15 +123,15 @@ abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
    * If this is the first chart command being called, try to open the browser
    * @param link
    */
-  def openFirstWindow(link: String) = {
-    if (!firstOpenWindow) {
+  def launchBrowser(link: String) = {
+    if (!browserLaunched) {
       openWindow(link) match {
         case Failure(msg) =>
           println(s"Error while opening window (cause: $msg)")
           println(s"You can browse the following URL: $link")
         case _ =>
       }
-      firstOpenWindow = true
+      browserLaunched = true
     }
   }
 
@@ -157,40 +139,22 @@ abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
    * Launches the server which hosts the charts. InetAddress.getLocalHost requires a properly configured /etc/hosts
    * on linux machines.
    * Assigns a random port
-   * @param message
    */
-  def startWispServer(message: String = s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}/") {
-    if (!serverMode) {
-      serverMode = true
-      val ps = new ChartServer
-      val args = UnfilteredWebApp.Arguments(altRoot = None, port = port)
-      val server = ps.get(args)
-      server.start
-      println("Server started: " + message)
-      http = Some(server)
-      chartServer = Some(ps)
+  def startServer() {
+    if (!chartServer.isDefined) {
+      chartServer = Some(new ChartServer(port))
+      println(s"Server started at http://${
+        java.net.InetAddress.getLocalHost.getCanonicalHostName
+      }:${port}")
     }
   }
 
-  /**
-   * Deletes the resulting index-*.html and stops the server
-   * Currently the index-*.html file persists in the $cwd if stopServer is not called.
-   */
-  def stopWispServer {
-    if (serverMode) {
-      chartServer.map(_.refresh("Shutting down...", ""))
-      http.map(_.stop)
-      http.map(_.destroy)
-      serverMode = false
-      chartServer = None
-    }
+  def stopServer {
+    chartServer.map(_.stop)
+    chartServer = None
   }
 
-  /**
-   * Iterates through the charts and builds the necessary javascript and html around them.
-   * returns the files contents as a string
-   */
-  def buildHtmlFile(): String = {
+  def renderChartsToHtml(): String = {
     val sb = new StringBuilder()
     sb.append(jsHeader)
     sb.append(reloadJs)
@@ -205,15 +169,13 @@ abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
 
   def refresh(): Unit = {
 
-    val contentWithPlaceholder = buildHtmlFile()
+    val contentWithPlaceholder = renderChartsToHtml()
     val contentHash = contentWithPlaceholder.hashCode.toHexString
     val actualContent = contentWithPlaceholder.replaceAllLiterally("HASH_PLACEHOLDER", contentHash)
 
     chartServer.map(_.refresh(actualContent, contentHash))
 
-    val (port, serverMode) = getWispServerInfo()
-
-    openFirstWindow(s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}")
+    launchBrowser(s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}")
   }
 
   def reloadJs =
@@ -256,32 +218,32 @@ abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
     def undo: Command
   }
 
-  case class Add(idx: Int, chart: P, state: S) extends Command {
+  case class Add(idx: Int, chart: TChart, config: TConfig) extends Command {
     def execute = {
       if (idx == chartVector.size)
-        chartVector = chartVector :+ Some((chart, state))
+        chartVector = chartVector :+ Some((chart, config))
       else if (idx < chartVector.size)
-        chartVector = chartVector.updated(idx, Some((chart, state)))
+        chartVector = chartVector.updated(idx, Some((chart, config)))
     }
 
-    def undo = Remove(idx, chart, state)
+    def undo = Remove(idx, chart, config)
   }
 
-  case class Remove(idx: Int, chart: P, state: S) extends Command {
+  case class Remove(idx: Int, chart: TChart, config: TConfig) extends Command {
     def execute = {
       chartVector = chartVector.updated(idx, None)
     }
 
-    def undo = Add(idx, chart, state)
+    def undo = Add(idx, chart, config)
   }
 
-  case class Update(idx: Int, chart: P, oldState: S, newState: S) extends Command {
+  case class Update(idx: Int, chart: TChart, oldConfig: TConfig, newConfig: TConfig) extends Command {
     def execute = {
-      setChartConfig(chart, newState)
-      chartVector = chartVector.updated(idx, Some((chart, newState)))
+      setChartConfig(chart, newConfig)
+      chartVector = chartVector.updated(idx, Some((chart, newConfig)))
     }
 
-    def undo = Update(idx, chart, newState, oldState)
+    def undo = Update(idx, chart, newConfig, oldConfig)
   }
 
 }
