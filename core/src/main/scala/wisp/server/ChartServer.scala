@@ -6,14 +6,7 @@ import unfiltered.response._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Promise}
 
-/**
- * User: austin
- * Date: 12/1/14
- *
- * An unfiltered web-app for displaying graphs
- */
-class PlotServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
-  // this is fulfilled by the plot command, to allow a browser to wait for plot to reload
+class ChartServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
   private var p = Promise[Unit]()
   private var content = "Initializing..."
   private var contentHash = ""
@@ -26,12 +19,12 @@ class PlotServer extends UnfilteredWebApp[UnfilteredWebApp.Arguments] {
 
   private class WebApp extends unfiltered.filter.Plan {
     def intent = {
-      // handle jsonp
       case req@GET(Path(Seg("check" :: Nil)) & Params(params)) =>
         val clientContentHash = params.values.headOption.map(_.headOption).flatten
         implicit val responder = req
         val response = s""""$contentHash""""
-        // block for plot command to fulfill promise, and release this result to trigger browser reload
+        // If content on the server side is the same as loaded by the client, block
+        // Block will be released on calling refresh()
         if (clientContentHash.forall(_ == contentHash)) {
           try {
             Await.result(p.future, Duration.Inf)

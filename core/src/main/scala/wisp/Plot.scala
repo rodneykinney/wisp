@@ -5,13 +5,13 @@ import wisp.highcharts._
 /**
  * Created by rodneykinney on 4/14/15.
  */
-object Plot extends HighchartsHtmlPlotter with SeriesDataConversions {
-  implicit val plotter = this
+object Plot extends HighchartsHtmlDisplay with SeriesDataConversions {
+  implicit val display = this
 
   private def api(data: SeriesData,
                   st: SeriesType) = {
     val config = RootConfig(series = Vector(Series(data.points, `type` = st)))
-    val base = new GenericChartAPI(config, plotter)
+    val base = new GenericChartAPI(config, display)
     data.categories match {
       case Some(c) => base.xAxis.categories(c)
       case None => base
@@ -30,7 +30,7 @@ object Plot extends HighchartsHtmlPlotter with SeriesDataConversions {
 
   def histogram(data: SeriesData, numBins: Int = 50) = {
     val config = RootConfig(series = Vector(Series(data.points, `type` = SeriesType.column)))
-    new HistogramAPI(config, plotter, numBins)
+    new HistogramAPI(config, display, numBins)
   }
 }
 

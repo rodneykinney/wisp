@@ -1,7 +1,7 @@
 package wisp.highcharts
 
 import spray.json.JsValue
-import wisp.{CustomJsonObject, Plotter}
+import wisp.{CustomJsonObject, ChartDisplay}
 
 import java.awt.Color
 import javax.jws.WebMethod
@@ -24,28 +24,29 @@ case class RootConfig(
                        other: Map[String, JsValue] = Map())
   extends CustomJsonObject
 
-trait RootPlot {
+trait RootChart {
   var config: RootConfig
 }
 
-trait BaseAPI[T <: BaseAPI[T]] extends RootPlot with API {
-  val plotter: Plotter[RootPlot, Int]
+trait BaseAPI[T <: BaseAPI[T]] extends RootChart with API {
+  val display: ChartDisplay[RootChart, Int]
 
-  val index = plotter.addPlot(this)
+  val index = display.addChart(this)
 
   def update(newData: RootConfig): T = {
     config = newData
-    plotter.updatePlot(index, this)
+    display.updateChart(index, this)
     this.asInstanceOf[T]
   }
 }
 
-class GenericChartAPI(var config: RootConfig, val plotter: Plotter[RootPlot, Int]) extends
-RootAPI[GenericChartAPI]
+class GenericChartAPI(var config: RootConfig,
+                      val display: ChartDisplay[RootChart, Int])
+  extends RootAPI[GenericChartAPI]
 
 trait RootAPI[T <: BaseAPI[T]] extends BaseAPI[T] {
   @WebMethod(action = "Remove this chart from view")
-  def remove() = plotter.removePlot(index)
+  def remove() = display.removeChart(index)
 
   @WebMethod
   def getXAxis(idx: Int) = {

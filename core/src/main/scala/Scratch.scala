@@ -14,7 +14,7 @@ object Scratch {
 
   def main(args: Array[String]): Unit = {
     //    undoRedo()
-    //    suite()
+    suite()
     histograms
   }
 

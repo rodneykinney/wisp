@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils
 import spray.json._
 import unfiltered.jetty.Server
 import unfiltered.util.Port
-import wisp.server.{UnfilteredWebApp, PlotServer}
+import wisp.server.{ChartServer, UnfilteredWebApp}
 
 import scala.concurrent.Promise
 import scala.util.{Failure, Random, Try}
@@ -16,40 +16,40 @@ import scala.util.{Failure, Random, Try}
 /**
  * Created by rodneykinney on 4/14/15.
  */
-trait Plotter[T, TRef] {
-  def addPlot(plot: T): TRef
+trait ChartDisplay[T, TRef] {
+  def addChart(chart: T): TRef
 
-  def updatePlot(id: TRef, newPlot: T): TRef
+  def updateChart(id: TRef, newChart: T): TRef
 
-  def removePlot(id: TRef): TRef
+  def removeChart(id: TRef): TRef
 
-  def plots: Seq[T]
+  def charts: Seq[T]
 }
 
-abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
-  private var plotVector = Vector.empty[Option[(P, S)]]
+abstract class HtmlChartDisplay[P, S] extends ChartDisplay[P, Int] {
+  private var chartVector = Vector.empty[Option[(P, S)]]
   private var commandHistory = Vector.empty[Command]
   private var lastCommand = -1
 
-  def getPlotState(plot: P): S
+  def getChartConfig(chart: P): S
 
-  def setPlotState(plot: P, state: S)
+  def setChartConfig(chart: P, state: S)
 
-  def renderPlot(state: S): String
+  def renderChart(state: S): String
 
-  def plots = plotVector.flatten.map(_._1)
+  def charts = chartVector.flatten.map(_._1)
 
-  def addPlot(plot: P) = {
-    val idx = plotVector.size
-    executeCommand(Add(idx, plot, getPlotState(plot)))
+  def addChart(chart: P) = {
+    val idx = chartVector.size
+    executeCommand(Add(idx, chart, getChartConfig(chart)))
     refresh()
     idx
   }
 
-  def updatePlot(idx: Int, newPlot: P) = {
-    if (idx >= 0 && idx < plotVector.size) {
-      val (plot, state) = plotVector(idx).get
-      executeCommand(Update(idx, newPlot, state, getPlotState(newPlot)))
+  def updateChart(idx: Int, newChart: P) = {
+    if (idx >= 0 && idx < chartVector.size) {
+      val (chart, state) = chartVector(idx).get
+      executeCommand(Update(idx, newChart, state, getChartConfig(newChart)))
       refresh()
     }
     idx
@@ -61,11 +61,11 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
     cmd.execute
   }
 
-  def removePlot(idx: Int) = {
-    if (idx >= 0 && idx < plotVector.size) {
-      plotVector(idx) match {
-        case Some((plot, state)) =>
-          executeCommand(Remove(idx, plot, state))
+  def removeChart(idx: Int) = {
+    if (idx >= 0 && idx < chartVector.size) {
+      chartVector(idx) match {
+        case Some((chart, state)) =>
+          executeCommand(Remove(idx, chart, state))
           refresh()
         case None => ()
       }
@@ -96,8 +96,8 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
   }
 
   def clear() =
-    for ((Some(p), i) <- plotVector.zipWithIndex) {
-      removePlot(i)
+    for ((Some(p), i) <- chartVector.zipWithIndex) {
+      removeChart(i)
     }
 
   private var port = Port.any
@@ -105,7 +105,7 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
   private var firstOpenWindow = false
 
   var http: Option[Server] = None
-  var plotServer: Option[PlotServer] = None
+  var chartServer: Option[ChartServer] = None
 
   startWispServer()
 
@@ -138,7 +138,7 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
   }
 
   /**
-   * If this is the first plot command being called, try to open the browser
+   * If this is the first chart command being called, try to open the browser
    * @param link
    */
   def openFirstWindow(link: String) = {
@@ -154,7 +154,7 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
   }
 
   /**
-   * Launches the server which hosts the plots. InetAddress.getLocalHost requires a properly configured /etc/hosts
+   * Launches the server which hosts the charts. InetAddress.getLocalHost requires a properly configured /etc/hosts
    * on linux machines.
    * Assigns a random port
    * @param message
@@ -162,13 +162,13 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
   def startWispServer(message: String = s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}/") {
     if (!serverMode) {
       serverMode = true
-      val ps = new PlotServer
+      val ps = new ChartServer
       val args = UnfilteredWebApp.Arguments(altRoot = None, port = port)
       val server = ps.get(args)
       server.start
       println("Server started: " + message)
       http = Some(server)
-      plotServer = Some(ps)
+      chartServer = Some(ps)
     }
   }
 
@@ -178,16 +178,16 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
    */
   def stopWispServer {
     if (serverMode) {
-      plotServer.map(_.refresh("Shutting down...", ""))
+      chartServer.map(_.refresh("Shutting down...", ""))
       http.map(_.stop)
       http.map(_.destroy)
       serverMode = false
-      plotServer = None
+      chartServer = None
     }
   }
 
   /**
-   * Iterates through the plots and builds the necessary javascript and html around them.
+   * Iterates through the charts and builds the necessary javascript and html around them.
    * returns the files contents as a string
    */
   def buildHtmlFile(): String = {
@@ -196,7 +196,7 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
     sb.append(reloadJs)
     sb.append("</head>")
     sb.append("<body>")
-    plotVector.flatten.map(_._2).map(renderPlot).foreach(sb.append)
+    chartVector.flatten.map(_._2).map(renderChart).foreach(sb.append)
     sb.append("</body>")
     sb.append("</html>")
 
@@ -209,7 +209,7 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
     val contentHash = contentWithPlaceholder.hashCode.toHexString
     val actualContent = contentWithPlaceholder.replaceAllLiterally("HASH_PLACEHOLDER", contentHash)
 
-    plotServer.map(_.refresh(actualContent, contentHash))
+    chartServer.map(_.refresh(actualContent, contentHash))
 
     val (port, serverMode) = getWispServerInfo()
 
@@ -256,32 +256,32 @@ abstract class HtmlPlotter[P, S] extends Plotter[P, Int] {
     def undo: Command
   }
 
-  case class Add(idx: Int, plot: P, state: S) extends Command {
+  case class Add(idx: Int, chart: P, state: S) extends Command {
     def execute = {
-      if (idx == plotVector.size)
-        plotVector = plotVector :+ Some((plot, state))
-      else if (idx < plotVector.size)
-        plotVector = plotVector.updated(idx, Some((plot, state)))
+      if (idx == chartVector.size)
+        chartVector = chartVector :+ Some((chart, state))
+      else if (idx < chartVector.size)
+        chartVector = chartVector.updated(idx, Some((chart, state)))
     }
 
-    def undo = Remove(idx, plot, state)
+    def undo = Remove(idx, chart, state)
   }
 
-  case class Remove(idx: Int, plot: P, state: S) extends Command {
+  case class Remove(idx: Int, chart: P, state: S) extends Command {
     def execute = {
-      plotVector = plotVector.updated(idx, None)
+      chartVector = chartVector.updated(idx, None)
     }
 
-    def undo = Add(idx, plot, state)
+    def undo = Add(idx, chart, state)
   }
 
-  case class Update(idx: Int, plot: P, oldState: S, newState: S) extends Command {
+  case class Update(idx: Int, chart: P, oldState: S, newState: S) extends Command {
     def execute = {
-      setPlotState(plot, newState)
-      plotVector = plotVector.updated(idx, Some((plot, newState)))
+      setChartConfig(chart, newState)
+      chartVector = chartVector.updated(idx, Some((chart, newState)))
     }
 
-    def undo = Update(idx, plot, newState, oldState)
+    def undo = Update(idx, chart, newState, oldState)
   }
 
 }

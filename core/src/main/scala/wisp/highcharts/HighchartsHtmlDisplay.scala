@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import wisp.HtmlPlotter
+import wisp.HtmlChartDisplay
 
 import scala.util.Random
 import spray.json._
@@ -9,9 +9,9 @@ import HighchartsJson._
 /**
  * Created by rodneykinney on 4/16/15.
  */
-class HighchartsHtmlPlotter extends HtmlPlotter[RootPlot, RootConfig] {
+class HighchartsHtmlDisplay extends HtmlChartDisplay[RootChart, RootConfig] {
 
-  def renderPlot(hc: RootConfig) = {
+  def renderChart(hc: RootConfig) = {
     val json = hc.toJson.toString
     val containerId = json.hashCode.toHexString
     s"""
@@ -27,7 +27,7 @@ class HighchartsHtmlPlotter extends HtmlPlotter[RootPlot, RootConfig] {
         """.stripMargin
   }
 
-  override def getPlotState(plot: RootPlot): RootConfig = plot.config
+  override def getChartConfig(plot: RootChart): RootConfig = plot.config
 
-  override def setPlotState(plot: RootPlot, state: RootConfig): Unit = plot.config = state
+  override def setChartConfig(plot: RootChart, state: RootConfig): Unit = plot.config = state
 }
