@@ -35,7 +35,7 @@ object HighchartsJson {
   implicit val orientation: JsonFormat[Orientation] = CustomJsonFormat.asString[Orientation]
   implicit val legendTitle = jsonFormat2(LegendTitle)
   implicit val legend: JsonFormat[Legend] = CustomJsonFormat(Legend)
-  implicit val dataLabels: JsonFormat[DataLabels] = CustomJsonFormat(DataLabels)
+  implicit val dataLabels: JsonFormat[DataLabel] = CustomJsonFormat(DataLabel)
   implicit val richPoint: JsonFormat[RichPoint] = CustomJsonFormat(RichPoint)
   implicit val stacking: JsonFormat[Stacking] = CustomJsonFormat.asString[Stacking]
   implicit val dashStyle: JsonFormat[DashStyle] = CustomJsonFormat.asString[DashStyle]

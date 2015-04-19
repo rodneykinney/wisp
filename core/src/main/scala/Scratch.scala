@@ -48,19 +48,9 @@ object Scratch {
       .xAxis.axisType(AxisType.logarithmic)
       .layout.size(800, 400)
     val x1 = x.take(10) ++ x.drop(80).take(10)
-    val lc1 = line(x1, x1)
-      .xAxis.title.text("Something")
-      .xAxis.range(.3, .7)
-      .yAxis.range(-1, 1)
-      .exporting.enabled(false)
-
-    //    val lcAA = line(List("a", "b", "c"), List("One", "Two", "Three"))
-    //    val lcAN = line(List("a", "b", "c"), List(1.0, 2.0, 3.0))
     val lcNA = line(List(1.0, 2.0, 3.0), List("One", "Two", "Three"))
-    //    val lc2 = line(x, x)
-    //        .title("Categories")
-    //        .xAxisCategories(x.map(t => s"$t.$t"))
-    //    val pieChart = ???
-    //    line(x, (t: Double) => math.sin(t * 4 * math.Pi)).title("Sin wave")
+    .xAxis.categories(List("A","B","C"))
+    .yAxis.categories(List("Do","Re","Mi"))
+    .series(0).showPointLabels(i => DataLabel(backgroundColor = Color.LIGHT_GRAY))
   }
 }
