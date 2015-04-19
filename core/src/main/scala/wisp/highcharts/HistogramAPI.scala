@@ -20,14 +20,14 @@ class HistogramAPI(var config: RootConfig,
     }
   update(config.copy(series =
     Vector(Series(Histogram.bin(originalData, numBins).points, `type` = SeriesType.column))))
-  this.other("plotOptions",
+  this.addOption("plotOptions",
     Map("column" ->
       Map("pointPadding" -> 0.toJson,
         "borderWidth" -> 0.toJson,
         "groupPadding" -> 0.toJson,
         "shadow" -> false.toJson
-      ).toJson
-    ).toJson)
+      )
+    ))
 
   @WebMethod(action = "Number of histogram bins")
   def bins(numBins: Int) = {

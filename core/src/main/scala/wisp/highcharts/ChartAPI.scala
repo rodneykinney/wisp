@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import spray.json.JsValue
+import spray.json.{JsonWriter, JsValue}
 import wisp.CustomJsonObject
 
 import java.awt.Color
@@ -66,7 +66,8 @@ class ChartAPI[T](chart: Chart, update: Chart => T) extends API {
   def style(x: Map[String, String]) = update(chart.copy(style = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(chart.copy(other = chart.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(chart.copy(other = chart.other + (name -> implicitly[JsonWriter[V]].write(value))))
 }
 
 case class ChartTitle(
@@ -85,7 +86,8 @@ class ChartTitleAPI[T](ct: ChartTitle, update: ChartTitle => T) extends API {
   def align(x: HAlign) = update(ct.copy(align = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(ct.copy(other = ct.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(ct.copy(other = ct.other + (name -> implicitly[JsonWriter[V]].write(value))))
 
 }
 

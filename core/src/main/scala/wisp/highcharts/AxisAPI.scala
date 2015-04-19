@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import spray.json.JsValue
+import spray.json.{JsonWriter, JsValue}
 import wisp.CustomJsonObject
 
 import javax.jws.WebMethod
@@ -32,7 +32,8 @@ class AxisAPI[T](axis: Axis)(update: Axis => T) extends API {
   def range(min: Double, max: Double) = update(axis.copy(min = Some(min), max = Some(max)))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(axis.copy(other = axis.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(axis.copy(other = axis.other + (name -> implicitly[JsonWriter[V]].write(value))))
 
 }
 
@@ -46,8 +47,8 @@ class AxisTitleAPI[T](at: AxisTitle, update: AxisTitle => T) extends API {
   def text(x: String) = update(at.copy(text = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(at.copy(other = at.other + (name -> value)))
-
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(at.copy(other = at.other + (name -> implicitly[JsonWriter[V]].write(value))))
 }
 
 

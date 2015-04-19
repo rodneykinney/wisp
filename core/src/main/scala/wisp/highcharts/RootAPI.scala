@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import spray.json.JsValue
+import spray.json.{JsonWriter, JsValue}
 import wisp.{CustomJsonObject, ChartDisplay}
 
 import java.awt.Color
@@ -119,7 +119,8 @@ trait RootAPI[T <: BaseAPI[T]] extends BaseAPI[T] {
   }
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(config.copy(other = config.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(config.copy(other = config.other + (name -> implicitly[JsonWriter[V]].write(value))))
 }
 
 case class Exporting(enabled: Boolean = true,
@@ -132,7 +133,8 @@ class ExportingAPI[T](e: Exporting, update: Exporting => T) extends API {
   def enabled(x: Boolean) = update(e.copy(enabled = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(e.copy(other = e.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(e.copy(other = e.other + (name -> implicitly[JsonWriter[V]].write(value))))
 }
 
 case class FloatingLabels(items: Seq[FloatingLabel])

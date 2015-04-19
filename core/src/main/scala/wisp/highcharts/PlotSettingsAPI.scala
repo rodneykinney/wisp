@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import spray.json.JsValue
+import spray.json.{JsonWriter, JsValue}
 import wisp.CustomJsonObject
 
 import java.awt.Color
@@ -52,7 +52,8 @@ class SeriesSettingsAPI[T](s: SeriesSettings, update: SeriesSettings => T) exten
   def stacking(x: Stacking) = update(s.copy(stacking = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(s.copy(other = s.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(s.copy(other = s.other + (name -> implicitly[JsonWriter[V]].write(value))))
 
 }
 
@@ -75,7 +76,8 @@ class MarkerAPI[T](m: MarkerConfig, update: MarkerConfig => T) extends API {
   def symbol(x: MarkerSymbol) = update(m.copy(symbol = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(m.copy(other = m.other + (name -> value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(m.copy(other = m.other + (name -> implicitly[JsonWriter[V]].write(value))))
 
 }
 

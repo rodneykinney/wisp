@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import spray.json.JsValue
+import spray.json.{JsonWriter, JsValue}
 
 import scala.collection.mutable.ListBuffer
 
@@ -47,5 +47,5 @@ trait API {
     methodList.toList
   }
 
-  def other(name: String, value: JsValue): Any
+  def addOption[T : JsonWriter](name: String, value: T): Any
 }

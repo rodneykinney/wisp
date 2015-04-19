@@ -1,6 +1,6 @@
 package wisp.highcharts
 
-import spray.json.JsValue
+import spray.json.{JsonWriter, JsValue}
 import wisp.CustomJsonObject
 
 import java.awt.Color
@@ -66,8 +66,8 @@ class LegendAPI[T](legend: Legend, update: Legend => T) extends API {
   def verticalJustification(x: VAlign) = update(legend.copy(verticalAlign = x))
 
   @WebMethod(action = "Add additional values to the JSON object")
-  def other(name: String, value: JsValue) = update(legend.copy(other = legend.other + (name ->
-    value)))
+  def addOption[V: JsonWriter](name: String, value: V)
+  = update(legend.copy(other = legend.other + (name -> implicitly[JsonWriter[V]].write(value))))
 
 }
 
