@@ -9,16 +9,16 @@ import javax.jws.WebMethod
 /**
  * Created by rodneykinney on 4/18/15.
  */
-class HistogramAPI(_config: RootConfig,
-                   plotter: Plotter[RootPlot, Int],
-                   numBins: Int) extends RootAPI(RootConfig(), plotter) {
-  require(_config.series.size == 1, "Can only compute histogram from a single series")
+class HistogramAPI(var config: RootConfig,
+                   val plotter: Plotter[RootPlot, Int],
+                   numBins: Int) extends RootAPI[HistogramAPI] {
+  require(config.series.size == 1, "Can only compute histogram from a single series")
   private val originalData =
-    for (p <- _config.series(0).data) yield (p.X, p.Y) match {
+    for (p <- config.series(0).data) yield (p.X, p.Y) match {
       case (Some(x), None) => x
       case _ => sys.error("Single-value series required")
     }
-  update(_config.copy(series =
+  update(config.copy(series =
     Vector(Series(Histogram.bin(originalData, numBins).points, `type` = SeriesType.column))))
   this.other("plotOptions",
     Map("column" ->

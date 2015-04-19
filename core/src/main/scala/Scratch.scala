@@ -27,7 +27,7 @@ object Scratch {
   }
 
   def histograms: Unit = {
-    histogram(List(0, 1)).title.text("0,1")
+    val h1 = histogram(List(0, 1)).title.text("0,1")
     histogram(0 to 200).title.text("0-201")
     histogram(
       for (i <- 1 to 6; j <- 1 to 6) yield i + j

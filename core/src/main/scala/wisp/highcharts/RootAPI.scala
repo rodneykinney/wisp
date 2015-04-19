@@ -9,11 +9,6 @@ import javax.jws.WebMethod
 /**
  * Created by rodneykinney on 4/18/15.
  */
-trait RootPlot {
-  var config: RootConfig
-}
-
-
 case class RootConfig(
                        chart: Chart = Chart(),
                        colors: Seq[Color] = null,
@@ -29,22 +24,31 @@ case class RootConfig(
                        other: Map[String, JsValue] = Map())
   extends CustomJsonObject
 
-class RootAPI(
-               var config: RootConfig,
-               plotter: Plotter[RootPlot, Int]) extends API with RootPlot {
+trait RootPlot {
+  var config: RootConfig
+}
+
+trait BaseAPI[T <: BaseAPI[T]] extends RootPlot with API {
+  val plotter: Plotter[RootPlot, Int]
+
   val index = plotter.addPlot(this)
 
-  def update(newData: RootConfig) = {
+  def update(newData: RootConfig): T = {
     config = newData
     plotter.updatePlot(index, this)
-    this
+    this.asInstanceOf[T]
   }
+}
 
+class GenericChartAPI(var config: RootConfig, val plotter: Plotter[RootPlot, Int]) extends
+RootAPI[GenericChartAPI]
+
+trait RootAPI[T <: BaseAPI[T]] extends BaseAPI[T] {
   @WebMethod(action = "Remove this chart from view")
   def remove() = plotter.removePlot(index)
 
   @WebMethod
-  def xAxis(idx: Int): AxisAPI[RootAPI] = {
+  def getXAxis(idx: Int) = {
     val axis: Axis = config.xAxis(idx)
     axis.api { a =>
       update(config.copy(xAxis = config.xAxis.updated(idx, a)))
@@ -52,10 +56,10 @@ class RootAPI(
   }
 
   @WebMethod
-  def xAxis: AxisAPI[RootAPI] = xAxis(0)
+  def xAxis = getXAxis(0)
 
   @WebMethod
-  def yAxis(idx: Int): AxisAPI[RootAPI] = {
+  def getYAxis(idx: Int) = {
     val axis: Axis = config.yAxis(idx)
     axis.api { a =>
       update(config.copy(yAxis = config.yAxis.updated(idx, a)))
@@ -63,7 +67,7 @@ class RootAPI(
   }
 
   @WebMethod
-  def yAxis: AxisAPI[RootAPI] = yAxis(0)
+  def yAxis = getYAxis(0)
 
   @WebMethod
   def addXAxis(axis: Axis = Axis()) = update(config.copy(xAxis = config.xAxis :+ axis))
