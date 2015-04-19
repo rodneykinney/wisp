@@ -18,18 +18,20 @@ trait ChartDisplay[T, TRef] {
   def charts: Seq[T]
 }
 
-abstract class HtmlChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, Int] {
-  private var chartVector = Vector.empty[Option[(TChart, TConfig)]]
-  private var commandHistory = Vector.empty[Command]
-  private var lastCommand = -1
-
+trait UndoableChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, Int] {
   def getChartConfig(chart: TChart): TConfig
 
   def setChartConfig(chart: TChart, config: TConfig)
 
-  def renderChart(config: TConfig): String
+  def refresh(): Unit
+
+  private var chartVector = Vector.empty[Option[(TChart, TConfig)]]
+  private var commandHistory = Vector.empty[Command]
+  private var lastCommand = -1
 
   def charts = chartVector.flatten.map(_._1)
+
+  def chartConfigs = chartVector.flatten.map(_._2)
 
   def addChart(chart: TChart) = {
     val idx = chartVector.size
@@ -45,12 +47,6 @@ abstract class HtmlChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, In
       refresh()
     }
     idx
-  }
-
-  def executeCommand(cmd: Command) = {
-    commandHistory = commandHistory.take(lastCommand + 1) :+ cmd
-    lastCommand += 1
-    cmd.execute
   }
 
   def removeChart(idx: Int) = {
@@ -92,21 +88,68 @@ abstract class HtmlChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, In
       removeChart(i)
     }
 
+  def executeCommand(cmd: Command) = {
+    commandHistory = commandHistory.take(lastCommand + 1) :+ cmd
+    lastCommand += 1
+    cmd.execute
+  }
+
+  trait Command {
+    def execute: Unit
+
+    def undo: Command
+  }
+
+  case class Add(idx: Int, chart: TChart, config: TConfig) extends Command {
+    def execute = {
+      if (idx == chartVector.size)
+        chartVector = chartVector :+ Some((chart, config))
+      else if (idx < chartVector.size)
+        chartVector = chartVector.updated(idx, Some((chart, config)))
+    }
+
+    def undo = Remove(idx, chart, config)
+  }
+
+  case class Remove(idx: Int, chart: TChart, config: TConfig) extends Command {
+    def execute = {
+      chartVector = chartVector.updated(idx, None)
+    }
+
+    def undo = Add(idx, chart, config)
+  }
+
+  case class Update(idx: Int, chart: TChart, oldConfig: TConfig, newConfig: TConfig) extends Command {
+    def execute = {
+      setChartConfig(chart, newConfig)
+      chartVector = chartVector.updated(idx, Some((chart, newConfig)))
+    }
+
+    def undo = Update(idx, chart, newConfig, oldConfig)
+  }
+
+
+
+}
+
+abstract class HtmlChartDisplay[TChart, TConfig] extends UndoableChartDisplay[TChart, TConfig] {
+  def renderChartsToHtml(): String
+
   private var port = Port.any
   private var browserLaunched = false
 
   var chartServer: Option[ChartServer] = None
 
+  def serverRunning = chartServer.isDefined
+
   startServer()
 
   def setPort(port: Int): Unit = {
-    stopServer
     this.port = port
-    startServer()
-  }
-
-  def disableOpenWindow(): Unit = {
-    this.browserLaunched = true
+    if (serverRunning) {
+      stopServer
+      startServer()
+    }
   }
 
   def openWindow(link: String) = {
@@ -154,19 +197,6 @@ abstract class HtmlChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, In
     chartServer = None
   }
 
-  def renderChartsToHtml(): String = {
-    val sb = new StringBuilder()
-    sb.append(jsHeader)
-    sb.append(reloadJs)
-    sb.append("</head>")
-    sb.append("<body>")
-    chartVector.flatten.map(_._2).map(renderChart).foreach(sb.append)
-    sb.append("</body>")
-    sb.append("</html>")
-
-    sb.toString()
-  }
-
   def refresh(): Unit = {
 
     val contentWithPlaceholder = renderChartsToHtml()
@@ -178,73 +208,6 @@ abstract class HtmlChartDisplay[TChart, TConfig] extends ChartDisplay[TChart, In
     launchBrowser(s"http://${java.net.InetAddress.getLocalHost.getCanonicalHostName}:${port}")
   }
 
-  def reloadJs =
-    """
-      |<script type="text/javascript">
-      |var contentHash = 'HASH_PLACEHOLDER';
-      |$.ajax({
-      |  url: '/check',
-      |  data: {'clientContentHash' : [contentHash]},
-      |  success: function(result) {
-      |    location.reload();
-      |  }})
-      |</script>
-    """.stripMargin
-
-  val wispJsImports: String =
-    """
-      |<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
-      |<script type="text/javascript" src="http://code.highcharts.com/4.0.4/highcharts.js"></script>
-      |<script type="text/javascript" src="http://code.highcharts.com/4.0.4/modules/exporting.js"></script>
-      |<script type="text/javascript" src="http://code.highcharts.com/4.0.4/highcharts-more.js"></script>
-    """.stripMargin
-
-  val jsHeader =
-    """
-      |<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-      |<html>
-      |  <head>
-      |    <title>
-      |      HighchartAPI
-      |    </title>
-      |    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    """.stripMargin +
-      wispJsImports
-
-
-  trait Command {
-    def execute: Unit
-
-    def undo: Command
-  }
-
-  case class Add(idx: Int, chart: TChart, config: TConfig) extends Command {
-    def execute = {
-      if (idx == chartVector.size)
-        chartVector = chartVector :+ Some((chart, config))
-      else if (idx < chartVector.size)
-        chartVector = chartVector.updated(idx, Some((chart, config)))
-    }
-
-    def undo = Remove(idx, chart, config)
-  }
-
-  case class Remove(idx: Int, chart: TChart, config: TConfig) extends Command {
-    def execute = {
-      chartVector = chartVector.updated(idx, None)
-    }
-
-    def undo = Add(idx, chart, config)
-  }
-
-  case class Update(idx: Int, chart: TChart, oldConfig: TConfig, newConfig: TConfig) extends Command {
-    def execute = {
-      setChartConfig(chart, newConfig)
-      chartVector = chartVector.updated(idx, Some((chart, newConfig)))
-    }
-
-    def undo = Update(idx, chart, newConfig, oldConfig)
-  }
 
 }
 
